@@ -51,7 +51,7 @@ sudo update-alternatives --set cc /usr/bin/clang
 sudo update-alternatives --set c++ /usr/bin/clang++
 sudo update-alternatives --set gcc /usr/bin/clang
 sudo update-alternatives --set g++ /usr/bin/clang++
-``` 
+```
 
 ### Third party libraries
 
