@@ -1,0 +1,3 @@
+[submodule "load_cells_plugin"]
+	path = load_cells_plugin
+	url = https://MatteoBonetto@github.com/mmt-unitn/load_cells_plugin.git
