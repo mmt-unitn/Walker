@@ -4,3 +4,6 @@
 [submodule "driver_plugin"]
 	path = driver_plugin
 	url = https://MatteoBonetto@github.com/mmt-unitn/driver_plugin.git
+[submodule "ego_state_plugin"]
+	path = ego_state_plugin
+	url = https://github.com/mmt-unitn/ego_state_plugin.git
