@@ -10,3 +10,6 @@
 [submodule "forces_calibration_plugin"]
 	path = forces_calibration_plugin
 	url = https://github.com/mmt-unitn/forces_calibration_plugin.git
+[submodule "portenta_plugin"]
+	path = portenta_plugin
+	url = https://github.com/mmt-unitn/portenta_plugin.git
