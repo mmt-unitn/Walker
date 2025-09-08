@@ -13,3 +13,6 @@
 [submodule "portenta_plugin"]
 	path = portenta_plugin
 	url = https://github.com/mmt-unitn/portenta_plugin.git
+[submodule "impedance_control_plugin"]
+	path = impedance_control_plugin
+	url = https://github.com/mmt-unitn/impedance_control_plugin.git
