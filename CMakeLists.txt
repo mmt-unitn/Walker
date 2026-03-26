@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(
-  mads_plugins
+  walker
   VERSION 1.4.0
   LANGUAGES CXX)
 if(CMAKE_BUILD_TYPE STREQUAL "")
@@ -24,13 +24,13 @@ find_package(
   COMPONENTS Interpreter
   REQUIRED)
 
-set(VENV_DIR "${CMAKE_SOURCE_DIR}/.venv")
+#set(VENV_DIR "${CMAKE_SOURCE_DIR}/.venv")
 
-if(WIN32)
-  set(VENV_PYTHON "${VENV_DIR}/Scripts/python.exe")
-else()
-  set(VENV_PYTHON "${VENV_DIR}/bin/python")
-endif()
+#if(WIN32)
+#  set(VENV_PYTHON "${VENV_DIR}/Scripts/python.exe")
+#else()
+#  set(VENV_PYTHON "${VENV_DIR}/bin/python")
+#endif()
 
 if(DEFINED ENV{VIRTUAL_ENV})
   message(
@@ -67,47 +67,70 @@ endif()
 # Plugins to build
 include(FetchContent)
 FetchContent_Declare(
-  replay_plugin
-  GIT_REPOSITORY https://github.com/mads-net/replay_plugin.git
+  load_cells_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
-  rerunner_plugin
-  GIT_REPOSITORY https://github.com/mads-net/rerunner_plugin.git
+  driver_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
-  tui_plugin
-  GIT_REPOSITORY https://github.com/mads-net/tui_plugin.git
+  portenta_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/portenta_plugin.git
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
-  hdf5_plugin
-  GIT_REPOSITORY https://github.com/mads-net/hdf5_plugin.git
+  imu_plugin
+  GIT_REPOSITORY https://github.com/MADS-NET/sense-hat_plugin.git
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
-  python_agent
-  GIT_REPOSITORY https://github.com/MADS-NET/python_agent.git
+  forces_calibration_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
-if(UNIX AND NOT APPLE)
-  FetchContent_Declare(
-    rpio_plugin
-    GIT_REPOSITORY https://github.com/MADS-NET/rpio.plugin.git
-    GIT_TAG HEAD
-    GIT_SHALLOW TRUE)
-  FetchContent_MakeAvailable(rpio_plugin)
-endif()
+FetchContent_Declare(
+  forces_autocalibration_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/forces_autocalibration_plugin.git
+  GIT_TAG HEAD
+  GIT_SHALLOW TRUE)
+
+FetchContent_Declare(
+  ego_state_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
+  GIT_TAG HEAD
+  GIT_SHALLOW TRUE)
+
+FetchContent_Declare(
+  FSM
+  GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
+  GIT_TAG HEAD
+  GIT_SHALLOW TRUE)
+
+FetchContent_Declare(
+  Harness_detachment_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/Harness_detachment_plugin.git
+  GIT_TAG HEAD
+  GIT_SHALLOW TRUE)
+
+#if(UNIX AND NOT APPLE)
+#  FetchContent_Declare(
+#    rpio_plugin
+#    GIT_REPOSITORY https://github.com/MADS-NET/rpio.plugin.git
+#    GIT_TAG HEAD
+#    GIT_SHALLOW TRUE)
+#  FetchContent_MakeAvailable(rpio_plugin)
+#endif()
 
 FetchContent_MakeAvailable(
-  replay_plugin rerunner_plugin tui_plugin hdf5_plugin
-  python_agent
+  FSM load_cells_plugin driver_plugin portenta_plugin ego_state_plugin forces_autocalibration_plugin forces_calibration_plugin imu_plugin Harness_detachment_plugin 
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")
@@ -119,7 +142,7 @@ set(CPACK_PACKAGE_DIRECTORY ${CMAKE_SOURCE_DIR}/packages)
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local")
 set(CPACK_PACKAGE_CONTACT "paolo.bosetti@unitn.it")
-set(CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/MADS-NET")
+set(CMAKE_PROJECT_HOMEPAGE_URL "https://github.com/mmt-unitn/Walker.git")
 set(CPACK_PACKAGE_DESCRIPTION "MADS installer: Multi-Agent Distributed System")
 if(APPLE)
   set(CPACK_GENERATOR "STGZ;ZIP")
