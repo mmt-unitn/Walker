@@ -59,7 +59,6 @@ endif()
 set(
   NOVAWALK_VERSION
   "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}"
-  CACHE STRING "Version of NovaWalk SDK to use for compilation"
 )
 
 # Plugins to build
@@ -74,7 +73,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
-  GIT_TAG HEAD
+  GIT_TAG f55966b
   GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
@@ -130,6 +129,7 @@ FetchContent_Declare(
 #)
 FetchContent_MakeAvailable(
   load_cells_plugin
+  driver_plugin
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")
