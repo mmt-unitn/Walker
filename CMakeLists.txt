@@ -18,59 +18,58 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 
-# Python3 virtual environment
-find_package(
-  Python3
-  COMPONENTS Interpreter
-  REQUIRED)
-
-#set(VENV_DIR "${CMAKE_SOURCE_DIR}/.venv")
-
-#if(WIN32)
-#  set(VENV_PYTHON "${VENV_DIR}/Scripts/python.exe")
-#else()
-#  set(VENV_PYTHON "${VENV_DIR}/bin/python")
-#endif()
-
-if(DEFINED ENV{VIRTUAL_ENV})
-  message(
-    STATUS "Python virtual environment is already activated: $ENV{VIRTUAL_ENV}")
-else()
-  if(NOT EXISTS "${VENV_DIR}")
-    execute_process(
-      COMMAND ${Python3_EXECUTABLE} -m venv "${VENV_DIR}"
-      RESULT_VARIABLE venv_creation_result
-      OUTPUT_VARIABLE venv_creation_output
-      ERROR_VARIABLE venv_creation_error
-      OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
-    if(NOT venv_creation_result EQUAL 0)
-      message(
-        FATAL_ERROR
-          "Failed to create virtual environment: ${venv_creation_error}")
-    endif()
-
-    add_custom_target(
-      setup_venv
-      COMMAND ${VENV_PYTHON} -m pip install --upgrade pip
-      COMMAND ${VENV_PYTHON} -m pip install numpy rerun-sdk
-      COMMENT
-        "Setting up Python virtual environment and installing dependencies"
-      VERBATIM)
+# Version from git tags
+# Check if project root is a git repository
+execute_process(
+  COMMAND git rev-parse --is-inside-work-tree
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  OUTPUT_VARIABLE IS_GIT_REPO
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
+if(IS_GIT_REPO STREQUAL "true")
+  # Get the latest tag
+  execute_process(
+    COMMAND git describe --tags --dirty
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    OUTPUT_VARIABLE GIT_TAG
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+  if(GIT_TAG MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)(.*)?$")
+    string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)(.*)?$" "\\1" CPACK_PACKAGE_VERSION_MAJOR "${GIT_TAG}")
+    string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)(.*)?$" "\\2" CPACK_PACKAGE_VERSION_MINOR "${GIT_TAG}")
+    string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)(.*)?$" "\\3" CPACK_PACKAGE_VERSION_PATCH "${GIT_TAG}")
+    message(STATUS "Project root is a git repository, using version from latest tag: ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
   else()
-    message(
-      FATAL_ERROR
-        "Python virtual environment already exists at ${VENV_DIR}, remember to activate it!"
-    )
+    message(WARNING "Latest git tag does not match vMAJOR.MINOR.PATCH format, using default version")
+    set(CPACK_PACKAGE_VERSION_MAJOR 0)
+    set(CPACK_PACKAGE_VERSION_MINOR 0)
+    set(CPACK_PACKAGE_VERSION_PATCH 1)
   endif()
+else()
+  message(WARNING "Project root is NOT a git repository, using default version")
+  set(CPACK_PACKAGE_VERSION_MAJOR 0)
+  set(CPACK_PACKAGE_VERSION_MINOR 0)
+  set(CPACK_PACKAGE_VERSION_PATCH 1)
+  set(GIT_TAG "vUNKNOWN_GIT_VERSION")
 endif()
+
+# Set variables for project
+set(
+  NOVAWALK_VERSION
+  "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}"
+  CACHE STRING "Version of NovaWalk SDK to use for compilation"
+)
 
 # Plugins to build
 include(FetchContent)
 FetchContent_Declare(
   load_cells_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
-  GIT_TAG HEAD
+  GIT_TAG e6d2122
   GIT_SHALLOW TRUE)
+
 
 FetchContent_Declare(
   driver_plugin
@@ -120,17 +119,17 @@ FetchContent_Declare(
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
-#if(UNIX AND NOT APPLE)
-#  FetchContent_Declare(
-#    rpio_plugin
-#    GIT_REPOSITORY https://github.com/MADS-NET/rpio.plugin.git
-#    GIT_TAG HEAD
-#    GIT_SHALLOW TRUE)
-#  FetchContent_MakeAvailable(rpio_plugin)
-#endif()
+FetchContent_Declare(
+  mqtt_plugin
+  GIT_REPOSITORY https://github.com/MADS-NET/mqtt_plugin.git
+  GIT_TAG HEAD
+  GIT_SHALLOW TRUE)
 
+#FetchContent_MakeAvailable(
+#  FSM load_cells_plugin driver_plugin portenta_plugin ego_state_plugin forces_autocalibration_plugin forces_calibration_plugin imu_plugin Harness_detachment_plugin mqtt_plugin
+#)
 FetchContent_MakeAvailable(
-  FSM load_cells_plugin driver_plugin portenta_plugin ego_state_plugin forces_autocalibration_plugin forces_calibration_plugin imu_plugin Harness_detachment_plugin 
+  load_cells_plugin
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")
