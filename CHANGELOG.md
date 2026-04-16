@@ -17,6 +17,8 @@ e questo progetto segue il versionamento semantico.
 
 ### Added
 - Plugin supported: loadcells, driver, portenta, imu, forces_calibration, ego_state, harness_detachment, FSM
+- Dependency required on the README
+- Service automatically installed
 
 ---
 
