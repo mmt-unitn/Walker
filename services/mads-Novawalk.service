@@ -1,0 +1,11 @@
+[Unit]
+Description=MADS Services Launcher
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/bin/bash -c "mads broker && mads filter driver && mads source loadcells && mads sink portenta && mads filter forces_calibration && mads source sense-hat && mads filter ego_state && mads filter harness_detachment && mads-fsm"
+
+[Install]
+WantedBy=multi-user.target

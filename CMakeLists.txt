@@ -60,6 +60,10 @@ set(
   NOVAWALK_VERSION
   "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}"
 )
+set(
+  INSTALL_MADS_SERVICE
+  ON
+)
 
 # Plugins to build
 include(FetchContent)
@@ -169,3 +173,21 @@ else()
   message(FATAL_ERROR "Unsupported platform")
 endif()
 include(CPack)
+
+
+if(INSTALL_MADS_SERVICE)
+
+  install(
+    FILES ${CMAKE_SOURCE_DIR}/services/mads-Novawalk.service
+    DESTINATION /etc/systemd/system
+  )
+
+  install(CODE "
+    message(STATUS \"Reloading systemd...\")
+    execute_process(COMMAND systemctl daemon-reload)
+
+    message(STATUS \"Enabling mads-Novawalk.service...\")
+    execute_process(COMMAND systemctl enable mads-Novawalk.service)
+  ")
+
+endif()

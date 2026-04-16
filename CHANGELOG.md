@@ -13,6 +13,13 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
+## [1.1.0] - 15/04/2026
+
+### Added
+- Plugin supported: loadcells, driver, portenta, imu, forces_calibration, ego_state, harness_detachment, FSM
+
+---
+
 ## [1.0.1] - 15/04/2026
 
 ### Added
