@@ -13,7 +13,7 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [1.1.0] - 15/04/2026
+## [v1.1.0] - 15/04/2026
 
 ### Added
 - Plugin supported: loadcells, driver, portenta, imu, forces_calibration, ego_state, harness_detachment, FSM
@@ -22,7 +22,7 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [1.0.1] - 15/04/2026
+## [v1.0.1] - 15/04/2026
 
 ### Added
 - Plugin supported: loadcells, driver
@@ -32,7 +32,7 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [1.0.0] - 15/04/2026
+## [v1.0.0] - 15/04/2026
 
 ### Added
 - First stable verion
