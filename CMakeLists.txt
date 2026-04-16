@@ -79,18 +79,42 @@ FetchContent_Declare(
 FetchContent_Declare(
   portenta_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/portenta_plugin.git
-  GIT_TAG HEAD
+  GIT_TAG 4057ba4
   GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
   imu_plugin
-  GIT_REPOSITORY https://github.com/MADS-NET/sense-hat_plugin.git
-  GIT_TAG HEAD
+  GIT_REPOSITORY https://github.com/mmt-unitn/sense-hat_plugin.git
+  GIT_TAG fb6d27b
   GIT_SHALLOW TRUE)
 
 FetchContent_Declare(
   forces_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
+  GIT_TAG afe1cd0
+  GIT_SHALLOW TRUE)
+
+FetchContent_Declare(
+  ego_state_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
+  GIT_TAG 27e3920
+  GIT_SHALLOW TRUE)
+
+FetchContent_Declare(
+  FSM
+  GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
+  GIT_TAG 6b6edd3
+  GIT_SHALLOW TRUE)
+
+FetchContent_Declare(
+  harness_detachment_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/Harness_detachment_plugin.git
+  GIT_TAG 6aa18ea
+  GIT_SHALLOW TRUE)
+
+FetchContent_Declare(
+  mqtt_plugin
+  GIT_REPOSITORY https://github.com/MADS-NET/mqtt_plugin.git
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
@@ -100,29 +124,10 @@ FetchContent_Declare(
   GIT_TAG HEAD
   GIT_SHALLOW TRUE)
 
-FetchContent_Declare(
-  ego_state_plugin
-  GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
-  GIT_TAG HEAD
-  GIT_SHALLOW TRUE)
-
-FetchContent_Declare(
-  FSM
-  GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
-  GIT_TAG HEAD
-  GIT_SHALLOW TRUE)
-
-FetchContent_Declare(
-  Harness_detachment_plugin
-  GIT_REPOSITORY https://github.com/mmt-unitn/Harness_detachment_plugin.git
-  GIT_TAG HEAD
-  GIT_SHALLOW TRUE)
-
-FetchContent_Declare(
-  mqtt_plugin
-  GIT_REPOSITORY https://github.com/MADS-NET/mqtt_plugin.git
-  GIT_TAG HEAD
-  GIT_SHALLOW TRUE)
+FetchContent_Declare(common_walker 
+  GIT_REPOSITORY https://github.com/mmt-unitn/common_walker.git
+  GIT_TAG        0.0.7
+  GIT_SHALLOW    TRUE)
 
 #FetchContent_MakeAvailable(
 #  FSM load_cells_plugin driver_plugin portenta_plugin ego_state_plugin forces_autocalibration_plugin forces_calibration_plugin imu_plugin Harness_detachment_plugin mqtt_plugin
@@ -130,6 +135,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(
   load_cells_plugin
   driver_plugin
+  portenta_plugin
+  imu_plugin
+  forces_calibration_plugin
+  ego_state_plugin
+  harness_detachment_plugin
+  FSM
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")
