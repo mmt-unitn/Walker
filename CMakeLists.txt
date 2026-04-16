@@ -65,6 +65,18 @@ set(
   ON
 )
 
+# --- Dependencies ---
+find_package(Eigen3 QUIET NO_MODULE)
+
+if(NOT Eigen3_FOUND)
+  message(FATAL_ERROR "
+Eigen3 not found!
+
+Install it with:
+  sudo apt install libeigen3-dev
+")
+endif()
+
 # Plugins to build
 include(FetchContent)
 FetchContent_Declare(
