@@ -58,23 +58,11 @@ After installing MADS, make sure the `mads` executable is available in your `PAT
 
 ### Sense HAT
 
-The `imu_plugin` is fetched from the `sense-hat_plugin` repository. For the required Sense HAT installation and setup steps, follow the README of:
-
-- `mmt-unitn/sense-hat_plugin`
-
-This project README does not duplicate those instructions to avoid drifting from the plugin-specific documentation.
+The `imu_plugin` is fetched from the `sense-hat_plugin` repository. For the required Sense HAT installation and setup steps, follow the README of [sense-hat repository](https://github.com/mmt-unitn/sense-hat_plugin)
 
 ### Phidget22
 
-If your setup requires Phidget22, follow the installation procedure documented in the referenced Phidget22 repository. The README at the pinned revision describes a local install flow based on `configure` and `make install`:
-
-```bash
-cd build/install
-../../configure --prefix=$(pwd)/..
-make install -j$(nproc)
-```
-
-This installs the library and headers inside the local `build/install` tree.
+If your setup requires Phidget22, follow the installation procedure documented in the referenced [Phidget22 repository](https://github.com/MatteoBonetto/Phidget22/tree/897d367527e2bce3e7ca2bc8521db213b275d294).
 
 ## Build and install
 

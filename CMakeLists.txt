@@ -67,7 +67,7 @@ set(
 
 # --- Dependencies ---
 find_package(Eigen3 QUIET NO_MODULE)
-
+# Eigen
 if(NOT Eigen3_FOUND)
   message(FATAL_ERROR "
 Eigen3 not found!
