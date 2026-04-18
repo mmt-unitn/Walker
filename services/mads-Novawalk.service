@@ -15,6 +15,6 @@ mads source sense-hat --crypto --key_broker=broker --key_client=broker --keys_di
 mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads filter harness_detachment --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads-fsm"
-
+ 
 [Install]
 WantedBy=multi-user.target
