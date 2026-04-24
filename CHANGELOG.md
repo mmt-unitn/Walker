@@ -13,6 +13,14 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
+## [v1.2.0] - 15/04/2026
+
+### Added
+- Watchdog plugin added
+- A variable is added to CMakeList for configuring fetchContent SHALLOW
+
+---
+
 ## [v1.1.0] - 15/04/2026
 
 ### Added

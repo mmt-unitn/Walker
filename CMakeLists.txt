@@ -4,22 +4,33 @@ project(
   walker
   VERSION 1.4.0
   LANGUAGES CXX)
+
 if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE
       "Release"
       CACHE STRING "Choose the type of build." FORCE)
 endif()
+
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX
       "${CMAKE_CURRENT_LIST_DIR}/usr/local/"
       CACHE PATH "Install path prefix, prepended onto install directories."
             FORCE)
 endif()
+
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 
+# Control whether FetchContent clones are shallow or full.
+# ON  -> shallow clone
+# OFF -> full clone
+set(FETCHCONTENT_SHALLOW_CLONE
+    ON
+    CACHE BOOL "Use shallow clones for FetchContent dependencies")
+
+message(STATUS "FETCHCONTENT_SHALLOW_CLONE: ${FETCHCONTENT_SHALLOW_CLONE}")
+
 # Version from git tags
-# Check if project root is a git repository
 execute_process(
   COMMAND git rev-parse --is-inside-work-tree
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -27,8 +38,8 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
   ERROR_QUIET
 )
+
 if(IS_GIT_REPO STREQUAL "true")
-  # Get the latest tag
   execute_process(
     COMMAND git describe --tags --dirty
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
@@ -55,19 +66,17 @@ else()
   set(GIT_TAG "vUNKNOWN_GIT_VERSION")
 endif()
 
-# Set variables for project
 set(
   NOVAWALK_VERSION
   "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}"
 )
+
 set(
   INSTALL_MADS_SERVICE
   ON
 )
 
-# --- Dependencies ---
 find_package(Eigen3 QUIET NO_MODULE)
-# Eigen
 if(NOT Eigen3_FOUND)
   message(FATAL_ERROR "
 Eigen3 not found!
@@ -77,77 +86,85 @@ Install it with:
 ")
 endif()
 
-# Plugins to build
 include(FetchContent)
+
 FetchContent_Declare(
   load_cells_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
   GIT_TAG e6d21223ae86048c3c70ccfda6e2124e6f0df353
-  GIT_SHALLOW FALSE)
-
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
   GIT_TAG f55966b
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   portenta_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/portenta_plugin.git
   GIT_TAG 4057ba4
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   imu_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/sense-hat_plugin.git
   GIT_TAG fb6d27b
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   forces_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
   GIT_TAG afe1cd0
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   ego_state_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
   GIT_TAG 27e3920
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   FSM
   GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
   GIT_TAG 6b6edd3
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   harness_detachment_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/Harness_detachment_plugin.git
   GIT_TAG 6aa18ea
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   watchdog_plugin
-  GIT_REPOSITORY  https://github.com/mmt-unitn/watchdog_plugin.git
-  GIT_TAG HEAD
-  GIT_SHALLOW FALSE)
+  GIT_REPOSITORY https://github.com/mmt-unitn/watchdog_plugin.git
+  GIT_TAG 1b852de
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
 FetchContent_Declare(
   forces_autocalibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_autocalibration_plugin.git
   GIT_TAG HEAD
-  GIT_SHALLOW FALSE)
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
-FetchContent_Declare(common_walker 
+FetchContent_Declare(
+  common_walker
   GIT_REPOSITORY https://github.com/mmt-unitn/common_walker.git
-  GIT_TAG        0.0.7
-  GIT_SHALLOW    FALSE)
+  GIT_TAG 0.0.7
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
 
-#FetchContent_MakeAvailable(
-#  FSM load_cells_plugin driver_plugin portenta_plugin ego_state_plugin forces_autocalibration_plugin forces_calibration_plugin imu_plugin Harness_detachment_plugin mqtt_plugin
-#)
 FetchContent_MakeAvailable(
   load_cells_plugin
   driver_plugin
