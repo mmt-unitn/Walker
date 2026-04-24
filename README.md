@@ -14,12 +14,12 @@ The build includes a set of Walker plugins plus the **FSM** core component, whic
 - `forces_calibration_plugin`
 - `ego_state_plugin`
 - `harness_detachment_plugin`
+- `watchdog_plugin`
 
 ### Core component
 - `FSM` — monolithic core module, not a plugin
 
 ### Declared but not currently built
-- `mqtt_plugin`
 - `forces_autocalibration_plugin`
 - `common_walker`
 
@@ -58,7 +58,7 @@ After installing MADS, make sure the `mads` executable is available in your `PAT
 
 ### Sense HAT
 
-The `imu_plugin` is fetched from the `sense-hat_plugin` repository. For the required Sense HAT installation and setup steps, follow the README of [sense-hat repository](https://github.com/mmt-unitn/sense-hat_plugin)
+The `imu_plugin` is fetched from the `sense-hat_plugin` repository. For the required Sense HAT installation and setup steps, follow the README of the [sense-hat repository](https://github.com/mmt-unitn/sense-hat_plugin).
 
 ### Phidget22
 
@@ -71,13 +71,26 @@ If your setup requires Phidget22, follow the installation procedure documented i
 Use:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON
+```
+
+A CMake cache variable is available to control whether `FetchContent` uses shallow or full Git clones for dependencies:
+
+- `FETCHCONTENT_SHALLOW_CLONE=ON` → shallow clone
+- `FETCHCONTENT_SHALLOW_CLONE=OFF` → full clone
+
+The default is `ON`.
+
+Example with full clones:
+
+```bash
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=OFF
 ```
 
 To disable systemd service installation, explicitly set:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DINSTALL_MADS_SERVICE=OFF
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF
 ```
 
 ### Build
@@ -115,7 +128,7 @@ Current default behavior in `CMakeLists.txt`:
 If you do **not** want service installation, configure with:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DINSTALL_MADS_SERVICE=OFF
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF
 ```
 
 Because the service is installed into the systemd system directory, the install step must be run with `sudo`.

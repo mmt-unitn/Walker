@@ -91,56 +91,56 @@ include(FetchContent)
 FetchContent_Declare(
   load_cells_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
-  GIT_TAG e6d21223ae86048c3c70ccfda6e2124e6f0df353
+  GIT_TAG 7651405
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
-  GIT_TAG f55966b
+  GIT_TAG 1824b0ab568a4e0ff761ac855eb2d5640633f1bb
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   portenta_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/portenta_plugin.git
-  GIT_TAG 4057ba4
+  GIT_TAG 971d8d8e78d540558ffb7d375e331df75f971428
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   imu_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/sense-hat_plugin.git
-  GIT_TAG fb6d27b
+  GIT_TAG fb6d27b1970be76e240d77be7a2c2c2e59d01f4d
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   forces_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
-  GIT_TAG afe1cd0
+  GIT_TAG 0262fc96eb755fa46e98377b753c9c522acfaede
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   ego_state_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
-  GIT_TAG 27e3920
+  GIT_TAG 89ad65de02e4794bc783ee3cc5315084c77bafba
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   FSM
   GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
-  GIT_TAG 6b6edd3
+  GIT_TAG 8855c74c686278e7c5247e8585d9ce0193d992d6
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   harness_detachment_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/Harness_detachment_plugin.git
-  GIT_TAG 6aa18ea
+  GIT_TAG a843664
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
@@ -165,6 +165,12 @@ FetchContent_Declare(
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
+FetchContent_Declare(plugin_tester
+  GIT_REPOSITORY https://github.com/mmt-unitn/plugin_tester.git
+  GIT_TAG        main
+  GIT_SHALLOW    TRUE
+)
+
 FetchContent_MakeAvailable(
   load_cells_plugin
   driver_plugin
@@ -175,6 +181,8 @@ FetchContent_MakeAvailable(
   harness_detachment_plugin
   FSM
   watchdog_plugin
+  plugin_tester
+
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")
