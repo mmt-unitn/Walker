@@ -14,6 +14,7 @@ mads filter forces_calibration --crypto --key_broker=broker --key_client=broker 
 mads source sense-hat --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads filter harness_detachment --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
+mads source watchdog --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads-fsm"
  
 [Install]

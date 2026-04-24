@@ -129,8 +129,8 @@ FetchContent_Declare(
   GIT_SHALLOW FALSE)
 
 FetchContent_Declare(
-  mqtt_plugin
-  GIT_REPOSITORY https://github.com/MADS-NET/mqtt_plugin.git
+  watchdog_plugin
+  GIT_REPOSITORY  https://github.com/mmt-unitn/watchdog_plugin.git
   GIT_TAG HEAD
   GIT_SHALLOW FALSE)
 
@@ -157,6 +157,7 @@ FetchContent_MakeAvailable(
   ego_state_plugin
   harness_detachment_plugin
   FSM
+  watchdog_plugin
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")
