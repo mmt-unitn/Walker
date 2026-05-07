@@ -13,7 +13,7 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [v1.2.0] - 15/04/2026 
+## [v1.2.0] - 07/05/2026 
 
 ### Added
 - Watchdog plugin added
