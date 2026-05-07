@@ -13,12 +13,13 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [v1.2.0] - 15/04/2026 [not released yet]
+## [v1.2.0] - 15/04/2026 
 
 ### Added
 - Watchdog plugin added
 - A variable is added to CMakeList for configuring fetchContent SHALLOW
 - Agents with Cryptography
+- Python script files for finding the Inertia and Dumping parameters of the walker 
 
 ---
 

@@ -175,6 +175,31 @@ Check logs:
 journalctl -u mads-Novawalk.service
 ```
 
+## Python Scripts
+
+### `compute_walker_inertia.py`
+
+A utility script for identifying Walker's rotational inertia and viscous damping parameters through experimental estimation.
+
+**Purpose:**
+- Temporarily stops the FSM service
+- Applies a series of variable torques to the wheels while measuring angular velocity from the IMU
+- Uses LMS (Least Mean Squares) regression to estimate the rotational inertia (`I`) and viscous damping coefficient (`C`)
+- Optionally allows fixing the damping coefficient to a known value and recalculating inertia
+
+**Output:**
+Prints estimated parameters according to the model: `torque = I * alpha + C * omega`
+
+**Requirements:**
+- MADS agent running with broker access
+- Proper security configuration (`/home/miro/security` directory expected)
+- Access to IMU data via the FSM
+- `sudo` privileges to control systemd services
+
+### `compute_walker_dumping.py`
+
+(Similar utility for computing Walker's damping characteristics)
+
 ## Contact
 
 MADS Consortium  
