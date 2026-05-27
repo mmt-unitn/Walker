@@ -5,11 +5,65 @@ import numpy as np
 import plotext as plt
 import subprocess
 from datetime import datetime
+from scipy.stats import normaltest
+import math
 
 wheel_radius = None
 wheel_base = None
 period = 0.1
 fmt = "%Y-%m-%dT%H:%M:%S.%f%z"
+
+def assess_normality(residuals, name="model", alpha=0.05):
+    res = np.asarray(residuals).flatten()
+
+    stat, p = normaltest(res)
+
+    print()
+    print(f"=== Normality check: {name} ===")
+    print(f"statistic:\t{stat:.4f}")
+    print(f"p-value:\t{p:.6g}")
+
+    # Decision based on p-value
+    if p > alpha:
+        print("✔ Cannot reject normality (residuals look Gaussian)")
+    else:
+        print("✖ Reject normality (residuals are NOT Gaussian)")
+
+    # Extra diagnostics (helpful for interpretation)
+    mu = np.mean(res)
+    sigma = np.std(res)
+    print(f"mean:\t\t{mu:.4g}")
+    print(f"std:\t\t{sigma:.4g}")
+
+    # Heuristic guidance using the statistic (not a strict rule)
+    if stat < 5:
+        print("statistic small → close to Gaussian")
+    elif stat < 20:
+        print("statistic moderate → some deviation from Gaussian")
+    else:
+        print("statistic large → strong deviation from Gaussian")
+
+    return stat, p
+
+def plot_residuals_with_gaussian(residuals, title):
+    res = residuals.flatten()
+
+    mu = np.mean(res)
+    sigma = np.std(res)
+
+    # Histogram (normalized)
+    hist, bin_edges = np.histogram(res, bins=30, density=True)
+    bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+
+    # Gaussian
+    x = np.linspace(mu - 4*sigma, mu + 4*sigma, 200)
+    gauss = (1 / (sigma * math.sqrt(2 * math.pi))) * np.exp(-0.5 * ((x - mu)/sigma)**2)
+
+    plt.clf()
+    plt.bar(bin_centers, hist)
+    plt.plot(x, gauss)
+    plt.title(title)
+    plt.show()
 
 async def listen():
     await asyncio.to_thread(input, "Press ENTER to stop\n")
@@ -56,16 +110,16 @@ async def main():
     agent.set_queue_size(1)
     
     # Aquire data
-    min_torque = -50
-    max_torque = 50
-    increment = 10
+    min_torque = -30
+    max_torque = 30
+    increment = 5
     step_function = False
     torque_walker = min_torque
     torque_walker_tmp = min_torque
     torque_wheel = T_walker2wheel(torque_walker)
     w_last = 0.0
     increasing = True
-    n_iterations = 25
+    n_iterations = 10
     time_imu_previous = datetime.now().astimezone()
     time_imu_current = datetime.now().astimezone()
     A = []
@@ -140,31 +194,71 @@ async def main():
     A_np = np.array(A)
     n_acquisition = A_np.shape[0]
 
-    T_vec = np.array(b).reshape((n_acquisition, 1))
+    b_np = np.array(b).reshape((n_acquisition, 1))
 
-    params = np.linalg.inv(A_np.T @ A_np) @ A_np.T @ T_vec
-    I = params[1]
-    C = params[0]
+    # =========================
+    # Case 1: fit both C and I
+    # =========================
+
+    params, *_ = np.linalg.lstsq(A_np, b_np, rcond=None)
+
+    C_fit = params[0, 0]
+    I_fit = params[1, 0]
+
+    tau_pred_fit = A_np @ params
+    res_fit = (b_np - tau_pred_fit).flatten()
+
+    # =========================
+    # Case 2: impose C, fit only I
+    # =========================
+
+    C_imposed = 19.75   # <-- put your known damping here
+
+    omega = A_np[:, 0].reshape((-1, 1))
+    alpha = A_np[:, 1].reshape((-1, 1))
+
+    # tau - C*w = I*alpha
+    b_reduced = b_np - C_imposed * omega
+
+    I_imposed, *_ = np.linalg.lstsq(alpha, b_reduced, rcond=None)
+    I_imposed = I_imposed[0, 0]
+
+    tau_pred_imposed = C_imposed * omega + I_imposed * alpha
+    res_imposed = (b_np - tau_pred_imposed).flatten()
+
+    # =========================
+    # Print results
+    # =========================
 
     print()
-    print("Estimated model:")
-    print("torque = I * alpha + B * omega")
-    print()
-    print(f"Inertia I:\t\t{I}")
-    print(f"Viscous damping C:\t{C}")
-    print()
+    print("Model 1: fitted C and I")
+    print(f"C fitted:\t{C_fit}")
+    print(f"I fitted:\t{I_fit}")
+    print(f"Residual mean:\t{np.mean(res_fit)}")
+    print(f"Residual std:\t{np.std(res_fit)}")
 
-    C_forced = 19
-    print(f"Imposing the value of dumping to {C_forced}")
-    w = A_np[:, 0:1]  
-    new_T_vec = T_vec - w * C_forced
-    new_A_np = A_np[:, 1:2]  
-    params = np.linalg.inv(new_A_np.T @ new_A_np) @ new_A_np.T @ new_T_vec
     print()
-    print("Estimated model:")
-    print(f"torque = I * alpha + {C_forced} * omega")
+    print("Model 2: imposed C, fitted I")
+    print(f"C imposed:\t{C_imposed}")
+    print(f"I fitted:\t{I_imposed}")
+    print(f"Residual mean:\t{np.mean(res_imposed)}")
+    print(f"Residual std:\t{np.std(res_imposed)}")
+
+    # =========================
+    # Normality tests
+    # =========================
+
+    assess_normality(res_fit, "Fit C & I", 0.3)
+    assess_normality(res_imposed, "C imposed", 0.3)
+
+    # =========================
+    # Histogram comparison
+    # =========================
+
     print()
-    print(f"Inertia I:\t\t{params[0]}")
+    plot_residuals_with_gaussian(res_fit, "Residuals (fit C & I)")
+    print()
+    plot_residuals_with_gaussian(res_imposed, "Residuals (C imposed)")
 
 
 

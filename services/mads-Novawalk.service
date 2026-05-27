@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Restart=always
 ExecStart=/bin/bash -c "
-mads broker -d --crypto=broker --keys_dir=/home/miro/security  &&\
+mads broker -d --crypto=broker --keys_dir=/home/miro/security --room=Novawalk  &&\
 mads filter driver --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads source loadcells --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads sink portenta --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
