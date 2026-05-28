@@ -13,8 +13,14 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [v1.3.0] - 07/05/2026 
+## [v1.3.1] - 07/05/2026 
 
+### Fixed
+- Correction of the service file for installation
+
+---
+
+## [v1.3.0] - 07/05/2026 
 ### Added
 - Python script test files for check impedance control mode 
 - Python script test files for check path following mode

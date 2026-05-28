@@ -11,9 +11,10 @@ mads filter driver --crypto --key_broker=broker --key_client=broker --keys_dir=/
 mads source loadcells --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads sink portenta --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads filter forces_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
+mads filter imu_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads source sense-hat --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
-mads filter harness_detachment --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
+mads filter unhookdetector --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads source watchdog --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security &&\
 mads-fsm"
  

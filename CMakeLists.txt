@@ -91,21 +91,21 @@ include(FetchContent)
 FetchContent_Declare(
   load_cells_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
-  GIT_TAG 7651405
+  GIT_TAG 04ab682
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
-  GIT_TAG 1824b0ab568a4e0ff761ac855eb2d5640633f1bb
+  GIT_TAG aaef7d7
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   portenta_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/portenta_plugin.git
-  GIT_TAG 971d8d8e78d540558ffb7d375e331df75f971428
+  GIT_TAG f9303b0
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
