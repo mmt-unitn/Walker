@@ -112,35 +112,36 @@ FetchContent_Declare(
 FetchContent_Declare(
   imu_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/sense-hat_plugin.git
-  GIT_TAG fb6d27b1970be76e240d77be7a2c2c2e59d01f4d
+  GIT_TAG 9f2a91e
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   forces_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
-  GIT_TAG 0262fc96eb755fa46e98377b753c9c522acfaede
+  GIT_TAG 086962c
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   ego_state_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
-  GIT_TAG 89ad65de02e4794bc783ee3cc5315084c77bafba
+  GIT_TAG 13bfcf9
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+  GIT_SUBMODULES_RECURSE TRUE
 )
 
 FetchContent_Declare(
   FSM
   GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
-  GIT_TAG 8855c74c686278e7c5247e8585d9ce0193d992d6
+  GIT_TAG 21cca54
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
-  harness_detachment_plugin
-  GIT_REPOSITORY https://github.com/mmt-unitn/Harness_detachment_plugin.git
-  GIT_TAG a843664
+  unhook_detector_plugin
+  GIT_REPOSITORY  https://github.com/mmt-unitn/UnhookDetector.git
+  GIT_TAG 90be9dc
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
@@ -161,7 +162,14 @@ FetchContent_Declare(
 FetchContent_Declare(
   common_walker
   GIT_REPOSITORY https://github.com/mmt-unitn/common_walker.git
-  GIT_TAG 0.0.7
+  GIT_TAG HEAD
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
+
+FetchContent_Declare(
+  imu_calibration_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/imu_calibration_plugin.git
+  GIT_TAG 22ea13c
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
@@ -176,9 +184,10 @@ FetchContent_MakeAvailable(
   driver_plugin
   portenta_plugin
   imu_plugin
+  imu_calibration_plugin
   forces_calibration_plugin
   ego_state_plugin
-  harness_detachment_plugin
+  unhook_detector_plugin
   FSM
   watchdog_plugin
   plugin_tester

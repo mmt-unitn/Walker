@@ -13,6 +13,23 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
+## [v1.3.0] - 07/05/2026 
+
+### Added
+- Python script test files for check impedance control mode 
+- Python script test files for check path following mode
+- imu_calibration plugin added
+- FSM publish a reason in case of uncommon change of modality
+
+### Changed
+- ego_state integrates into sensor fusion also absolute pose data when available
+
+### Fixed
+- improved the unhook detection 
+
+
+---
+
 ## [v1.2.0] - 07/05/2026 
 
 ### Added
