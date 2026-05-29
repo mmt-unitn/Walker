@@ -1,0 +1,47 @@
+import subprocess
+import time
+from pathlib import Path
+
+
+def kill_port(port: int = 8080) -> None:
+    result = subprocess.run(
+        ["bash", "-lc", f"lsof -tiTCP:{port} -sTCP:LISTEN"],
+        text=True,
+        capture_output=True,
+    )
+
+    for pid in result.stdout.strip().splitlines():
+        subprocess.run(["kill", "-9", pid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def stop_tmux_session(session_name: str) -> None:
+    subprocess.run(
+        ["tmux", "kill-session", "-t", session_name],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def start_process_compose_session(repo_root, session_name: str, debug: bool = True) -> None:
+    repo_root = Path(repo_root)
+    launch_dir = repo_root / "launch"
+    log_file = launch_dir / "process-compose-debug.log"
+
+    kill_port(8080)
+    stop_tmux_session(session_name)
+    kill_port(8080)
+    time.sleep(2)
+
+    cmd = (
+        f"cd {launch_dir!s} && "
+        f"process-compose"
+    )
+
+    subprocess.run(
+        ["tmux", "new-session", "-d", "-s", session_name, "bash", "-lc", cmd],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    print(f"Started tmux session: {session_name}")

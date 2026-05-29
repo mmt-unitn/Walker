@@ -1,0 +1,25 @@
+[Unit]
+Description=MADS Services Launcher
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+
+Environment="MADS_KEYS_DIR=@MADS_KEYS_DIR@"
+
+ExecStart=/bin/bash -c "\
+mads broker -d --crypto=broker --keys_dir=${MADS_KEYS_DIR} --room=Novawalk && \
+mads filter driver --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads source loadcells --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads sink portenta --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads filter forces_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads filter imu_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads source sense-hat --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads filter unhookdetector --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads source watchdog --crypto --key_broker=broker --key_client=broker --keys_dir=${MADS_KEYS_DIR} && \
+mads-fsm"
+
+[Install]
+WantedBy=multi-user.target

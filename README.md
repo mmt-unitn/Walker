@@ -200,6 +200,61 @@ Prints estimated parameters according to the model: `torque = I * alpha + C * om
 
 (Similar utility for computing Walker's damping characteristics)
 
+# Test Scripts
+
+## Common requirements for all tests
+
+All Python test scripts must be executed inside a dedicated Python virtual environment.
+
+Create and activate a virtual environment:
+
+```bash
+cd Python
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the required Python dependencies:
+
+```bash
+pip install pyserial
+```
+
+Additional dependencies may be required depending on the specific test being executed.
+
+The virtual environment should be activated before running any of the test scripts.
+
+---
+
+## `test_driver_communication.py`
+
+This test verifies the system's ability to detect and properly handle a loss of communication with the motor driver.
+
+### Purpose
+
+- Starts the Walker software stack using the test-specific configuration.
+- Monitors communication between the Driver, FSM, and Portenta components through MADS.
+- Waits until normal driver communication is established.
+- Simulates a driver communication failure by closing the serial connection to the driver board.
+- Measures the time required for the FSM to detect the failure and trigger the corresponding emergency command.
+- Evaluates whether the failure handling latency remains below the configured threshold.
+
+### Measured parameter
+
+- Time elapsed between failure detection by the FSM and the generation of the emergency command.
+
+### Pass criterion
+
+- The emergency response must be generated within the configured maximum allowed time (`max_elapsed_time_ms`).
+
+### Requirements
+
+- MADS broker running and reachable.
+- Walker software stack available.
+- Access to the driver serial interface (`/dev/drivers`).
+- Python virtual environment with `pyserial` installed.
+- Appropriate permissions to access serial devices.
+
 ## Contact
 
 MADS Consortium  
