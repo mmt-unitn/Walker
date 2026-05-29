@@ -2,8 +2,8 @@
 python/.venv
 /usr
 /packages
-/launch/RTIMULib.iniPython/.venv/
+/launch/RTIMULib.ini
+/launch/*.log
 python/.venv/
 Python/.venv/
 __pycache__/
-*.pyc
