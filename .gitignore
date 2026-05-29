@@ -1,4 +1,8 @@
-/*build
-Python/.venv
+/build
+python/.venv
 /usr
 /packages
+/launch/RTIMULib.iniPython/.venv/
+python/.venv/
+__pycache__/
+*.pyc

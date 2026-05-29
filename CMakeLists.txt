@@ -224,8 +224,17 @@ include(CPack)
 
 if(INSTALL_MADS_SERVICE)
 
+  set(HOME_DIR "$ENV{HOME}")
+  set(MADS_KEYS_DIR "${HOME_DIR}/security")
+
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/services/mads-Novawalk.service.in
+    ${CMAKE_CURRENT_BINARY_DIR}/services/mads-Novawalk.service
+    @ONLY
+  )
+
   install(
-    FILES ${CMAKE_SOURCE_DIR}/services/mads-Novawalk.service
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/services/mads-Novawalk.service
     DESTINATION /etc/systemd/system
   )
 
