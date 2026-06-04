@@ -11,19 +11,14 @@ import subprocess
 import os
 from pathlib import Path
 import shutil
-
-script_dir = Path(__file__).resolve().parent
-repo_root = script_dir.parent
-# derive config filename from this script's name: replace .py with .ini
-config_filename = Path(__file__).stem + ".ini"
-config_file = repo_root / "config_files" / config_filename
+from session_utils import *
 
 TEST_PROFILES = {
     "legacy": {
         "label": "legacy M-only diagnostic",
-        "target_M": 20.0,
-        "target_C": 70.0,
-        "target_K": 5.0,
+        "target_M": 70.0,
+        "target_C": 40.0,
+        "target_K": 25.0,
         "force_source": "virtual",
         "validation": "output_error",
     },
@@ -39,14 +34,14 @@ TEST_PROFILES = {
 
 TEST_CONFIG = {
     "period_s": 0.01,
+    "session_name": "process-compose-terminal",
     "command_topic": "GUI",
     "enable_virtual_force": True,
-    "excitation_force_N": 30.0,
-    "excitation_duration_s": 3.0,
-    "loadcell_deadzone_N": 10.0,
-    "startup_delay_s": 1.0,
-    "mode_transition_delay_s": 0.5,
-    "settle_delay_s": 1.0,
+    "excitation_force_N": 40.0,
+    "excitation_duration_s": 5.0,
+    "startup_delay_s": 3.0,
+    "mode_transition_delay_s": 0.7,
+    "settle_delay_s": 3.0,
     "return_to_idle_on_finish": True,
     "min_regression_samples": 30,
     "valid_start_time_s": 0.15,
@@ -54,7 +49,7 @@ TEST_CONFIG = {
     "receive_timeout_margin_ms": 2,
     "tolerance": 0.10,
     "fit_bounds": {
-        "M": (1.0, 30.0),
+        "M": (1.0, 100.0),
         "C": (0.0, 60.0),
         "K": (0.0, 40.0),
     },
@@ -119,11 +114,6 @@ def plot_force_diagnostics(t_values, virtual_values, loadcell_values, total_valu
     plt.ylabel("force [N]")
     plt.show()
 
-def apply_deadzone(value, threshold):
-    if abs(value) < threshold:
-        return 0.0
-    return value
-
 async def listen():
     """Wait for ENTER key press to stop gracefully."""
     try:
@@ -171,13 +161,11 @@ async def run_test(agent, profile):
     await asyncio.sleep(TEST_CONFIG["mode_transition_delay_s"])
 
     agent.publish({"change_mode": "impedance_control_mode",
-                   "impedance_params": impedance_params,
-                   "loadcell_deadzone_N": TEST_CONFIG["loadcell_deadzone_N"]},
+                   "impedance_params": impedance_params},
                   command_topic)
     print(f"Test profile: {profile['label']} ({force_source} force fit, "
           f"{validation} validation)")
     print(f"Configured Impedance: M={target_M}, C={target_C}, K={target_K}")
-    print(f"Loadcell deadzone: +/-{TEST_CONFIG['loadcell_deadzone_N']:.3f} N")
     print(f"Published impedance_params on {command_topic}:")
     print(json.dumps(impedance_params, indent=2))
 
@@ -206,6 +194,7 @@ async def run_test(agent, profile):
     while not stop_task.done():
         t = time.time() - start_time
         if duration is not None and t > duration:
+            print("Excitation duration complete.")
             break
 
         task = asyncio.create_task(loop_control(period))
@@ -223,28 +212,18 @@ async def run_test(agent, profile):
         lm = agent.last_message()
         if lm[0] == "ego_state":
             state = lm[1].get("ego_state", {})
-            print(f"Received ego_state at t={t:.2f}s: {state}")
 
             # Extract kinematic variables (based on ego_state schema)
             a = state.get("acceleration", 0.0)
             v = state.get("speed", 0.0)
             x = state.get("space_linear", 0.0)
             Fx_raw = state.get("F_x", 0.0)
-            Fx = apply_deadzone(Fx_raw, TEST_CONFIG["loadcell_deadzone_N"])
-            Ftotal = virtual_force + Fx
+            Ftotal = virtual_force + Fx_raw
             a_cmd = (Ftotal - target_C * v - target_K * x) / target_M
-
-            if len(recorded_F) % 50 == 0:
-                print(f"  [t={t:.1f}s] Fv={virtual_force:.2f} "
-                        f"Fx_raw={Fx_raw:.2f} Fx_used={Fx:.2f} "
-                        f"Ft={Ftotal:.2f} a={a:.4f} "
-                        f"a_expected={a_cmd:.4f} "
-                        f"v={v:.4f} x={x:.4f}")
 
             recorded_t.append(t)
             recorded_F.append(virtual_force)
             recorded_Fx_raw.append(Fx_raw)
-            recorded_Fx.append(Fx)
             recorded_Ftotal.append(Ftotal)
             recorded_a.append(a)
             recorded_a_des.append(a_cmd)
@@ -305,7 +284,6 @@ async def run_test(agent, profile):
         F_fit = F_arr[valid_mask]
     F_virtual_fit = F_arr[valid_mask]
     Fx_raw_fit = Fx_raw_arr[valid_mask]
-    Fx_fit = Fx_arr[valid_mask]
     Ftotal_fit = Ftotal_arr[valid_mask]
     a_fit = a_arr[valid_mask]
     a_des_fit = a_des_arr[valid_mask]
@@ -488,11 +466,8 @@ async def run_test(agent, profile):
     print("--------------------------")
     print("=== Force Diagnostics ===")
     print(f"Virtual Force Mean:      {np.mean(F_virtual_fit):.3f} N")
-    print(f"Loadcell Deadzone:       +/-{TEST_CONFIG['loadcell_deadzone_N']:.3f} N")
     print(f"Loadcell F_x Raw Mean:   {np.mean(Fx_raw_fit):.3f} N")
     print(f"Loadcell F_x Raw Min/Max:{np.min(Fx_raw_fit):.3f} / {np.max(Fx_raw_fit):.3f} N")
-    print(f"Loadcell F_x Used Mean:  {np.mean(Fx_fit):.3f} N")
-    print(f"Loadcell F_x Used Min/Max:{np.min(Fx_fit):.3f} / {np.max(Fx_fit):.3f} N")
     print(f"Total Force Mean:        {np.mean(Ftotal_fit):.3f} N")
     print(f"Total Force Min/Max:     {np.min(Ftotal_fit):.3f} / {np.max(Ftotal_fit):.3f} N")
     print("--------------------------")
@@ -501,7 +476,7 @@ async def run_test(agent, profile):
     print("==========================\n")
 
     # Plot virtual force, load-cell force, and their sum in terminal
-    plot_force_diagnostics(t_fit, F_virtual_fit, Fx_fit, Ftotal_fit)
+    plot_force_diagnostics(t_fit, F_virtual_fit, Fx_raw_fit, Ftotal_fit)
 
     # Plot measured acceleration in terminal
     plot_time_series(t_fit, a_fit, "Measured Acceleration", "a [m/s^2]")
@@ -550,28 +525,33 @@ async def main():
         help="Test profile to run. Defaults to legacy known behavior.",
     )
     args = parser.parse_args()
-
-    shutil.copyfile(config_file, repo_root / "config_files" / "mads.ini")
-    broker_process = subprocess.Popen(
-    [
-        "tmux",
-        "new-session",
-        "-d",
-        "-s",
-        "mads_process",
-        f"cd {repo_root} && process-compose"
-    ],
-    start_new_session=True,
-    )
-    print("\nWaiting 5 seconds to ensure all agents are started...")
-    await asyncio.sleep(5)
-
-    agent = Agent("impedance_tester")
-    agent.set_id("python")
     
+    script_dir = Path(__file__).resolve().parent
+    repo_root = script_dir.parent
+    # derive config filename from this script's name: replace .py with .ini
+    script_name = Path(__file__).stem
+    config_filename = script_name + ".ini"
+    config_file = repo_root / "config_files" / config_filename
+    # copy the config file to the expected test
+    shutil.copyfile(config_file, repo_root / "config_files" / "mads.ini")
+
+    start_process_compose_session(
+        repo_root,
+        TEST_CONFIG["session_name"]
+    )
+    time.sleep(TEST_CONFIG["startup_delay_s"])
+
+    # Initialize the agent
+    agent = Agent(script_name)
+    agent.set_id("python")
     agent.set_settings_timeout(5000)
     while agent.init(False) != 0:
         print("Cannot contact broker. Retrying...")
+        print(f"ERROR: {agent.last_error()}")
+        start_process_compose_session(
+            repo_root,
+            TEST_CONFIG["session_name"]
+        )
         await asyncio.sleep(1)
         
     if agent.set_queue_size(TEST_CONFIG["message_queue_size"]) != 0:
@@ -579,13 +559,8 @@ async def main():
         exit()
         
     agent.connect()
-    receive_timeout_ms = int(
-        1000
-    )
+    receive_timeout_ms = int(1000)
     agent.set_receive_timeout(max(receive_timeout_ms, 1))
-    await asyncio.sleep(2)
-    # calibration
-    agent.publish({"start_calibration": True}, "GUI")
     
     try:
         await run_test(agent, TEST_PROFILES[args.profile])

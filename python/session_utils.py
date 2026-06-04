@@ -26,8 +26,8 @@ def start_process_compose_session(repo_root, session_name: str, filename: str = 
     repo_root = Path(repo_root)
     launch_dir = repo_root / "launch"
 
-    kill_port(8080)
     stop_tmux_session(session_name)
+    kill_port(8080)
     time.sleep(2)
 
     cmd = (

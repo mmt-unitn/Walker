@@ -82,8 +82,8 @@ def run_test(agent):
     except Exception as e:
         print(f"Error during test execution: {e}")
         agent.publish({"mode": "speed", "sp": {"sx": 0, "dx": 0}}, "FSM/set_point")
-        kill_port(8080)
         stop_tmux_session(TEST_CONFIG["session_name"])
+        kill_port(8080)
 
     agent.publish({"mode": "speed", "sp": {"sx": 0, "dx": 0}}, "FSM/set_point")
     print(f"\n=== RESULTS for Test {TEST_CONFIG['test_id_1']} ===")
@@ -98,8 +98,8 @@ def run_test(agent):
     else:
         print(f"[FAIL] Test {TEST_CONFIG['test_id_2']} Failed! The system is not applying the speed limit correctly.")
 
-    kill_port(8080)
     stop_tmux_session(TEST_CONFIG["session_name"])
+    kill_port(8080)
 
 
 #------------------------------- Main execution -------------------------------
@@ -151,8 +151,8 @@ def main():
         run_test(agent)
     except KeyboardInterrupt:
         print("Test interrupted by user.")
-        kill_port(8080)
         stop_tmux_session(TEST_CONFIG["session_name"])
+        kill_port(8080)
 
 if __name__ == "__main__":
     main()
