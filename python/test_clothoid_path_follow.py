@@ -26,8 +26,19 @@ import math
 import os
 import subprocess
 import sys
+from mads_agent import Agent, MessageType
 import time
+from pathlib import Path
+import shutil
+from session_utils import *
 
+TEST_CONFIG = {
+    "session_name": "process-compose-terminal",
+    "startup_delay_s": 5.0,
+    "message_queue_size": 1000,
+    "path_scale_x": 4,
+    "path_scale_y": 1,
+}
 
 # FSM listens for GUI commands on this topic. This matches test_impedance_control.py.
 GUI_TOPIC = "GUI"
@@ -36,7 +47,7 @@ GUI_TOPIC = "GUI"
 # are diagnostics that explain why the FSM may refuse to enter path following.
 FEEDBACK_TOPICS = ["FSM/path_planning", "FSM/mode", "driver", "ego_state"]
 
-DEFAULT_SAMPLES = 100
+DEFAULT_SAMPLES = 300
 DEFAULT_RUN_TIMEOUT_S = 60.0
 
 # Test knobs. Keep the points in world-frame coordinates.
@@ -45,12 +56,12 @@ TEST_END_POINT = (0.2, 0.2)
 TEST_VIRTUAL_FORCE_N = 10.0
 
 # Test values from the requirement (ID 13).
-BASELINE_TORSIONAL_STIFFNESS = 50.0
-HIGH_TORSIONAL_STIFFNESS = 50.0
-MAX_ALLOWED_OFFSET_M = 2.0
+BASELINE_TORSIONAL_STIFFNESS = 10.0
+HIGH_TORSIONAL_STIFFNESS = 100.0
+MAX_ALLOWED_OFFSET_M = 1.0
 
 # "Did the walker actually follow the path" guards. A stationary walker sits
-# at (0, 0), which is ON the commanded path (offset = 0), so the 2 m check
+# at (0, 0), which is ON the commanded path (offset = 0), so the 1 m check
 # alone is not sufficient evidence.
 MIN_FINAL_DISTANCE_M = 0.5
 MIN_PROGRESS_RATIO = 0.8
@@ -64,11 +75,11 @@ IMPEDANCE_PARAMS = {
     "M_v": 5.0,
     "M_w": 2.0,
     "K_v": 0.0,
-    "C_v": 15.0,
+    "C_v": 40.0,
     # NOTE: the spec writes C_w in "N m s/m", which is dimensionally
     # inconsistent for a torsional damper (expected: N m s/rad). The numeric
     # value is passed through to FSM verbatim; flag this to the spec author.
-    "C_w": 15.0,
+    "C_w": 35.0,
 }
 
 VIRTUAL_COMMAND = {
@@ -81,17 +92,10 @@ DELTA_THETA = {
     "reference_function": "look_ahead",
 }
 
-
 def normalized_curvature(u: float, amplitude: float) -> float:
-    """Piecewise-linear curvature profile for four joined clothoid segments."""
-    # A clothoid has linearly changing curvature. To start and end with zero
-    # curvature while still reaching (4,4), we join four clothoid-like segments:
-    # 0 -> +k -> 0 -> -k -> 0.
-    if u < 0.25:
-        return amplitude * (4.0 * u)
-    if u < 0.75:
-        return amplitude * (2.0 - 4.0 * u)
-    return amplitude * (-4.0 + 4.0 * u)
+    # Linear curvature: true clothoid / Euler spiral behavior.
+    # Positive then negative, so final heading returns to 0.
+    return amplitude * (1.0 - 2.0 * u)
 
 
 def integrate_normalized_path(
@@ -169,19 +173,20 @@ def generate_clothoid_samples(samples: int) -> tuple[list[float], list[float], l
 
     amplitude = solve_amplitude_for_diagonal()
     x_norm, y_norm, theta_norm = integrate_normalized_path(amplitude)
-    scale = 4.0 / x_norm[-1]
+    scale_x = TEST_CONFIG["path_scale_x"] / x_norm[-1]
+    scale_y = TEST_CONFIG["path_scale_y"] / y_norm[-1]
 
     x = []
     y = []
     theta = []
     for index in range(samples):
         ratio = index / (samples - 1)
-        x.append(interpolate(x_norm, ratio) * scale)
-        y.append(interpolate(y_norm, ratio) * scale)
+        x.append(interpolate(x_norm, ratio) * scale_x)
+        y.append(interpolate(y_norm, ratio) * scale_y)
         theta.append(interpolate(theta_norm, ratio))
 
     x[0], y[0], theta[0] = 0.0, 0.0, 0.0
-    x[-1], y[-1], theta[-1] = 4.0, 4.0, 0.0
+    theta[-1] = 0.0
     return x, y, theta
 
 
@@ -253,41 +258,6 @@ def add_mads_python_path() -> None:
         sys.path.append(python_path)
 
 
-def configure_agent(agent: object, agent_id: str, key_dir: str) -> None:
-    # Same security setup used by test_impedance_control.py.
-    agent.set_id(agent_id)
-    agent.set_key_dir(key_dir)
-    agent.set_client_key_name("broker")
-    agent.set_server_key_name("broker")
-    agent.set_settings_timeout(2000)
-
-
-def create_agent(agent_id: str, key_dir: str) -> tuple[object, object]:
-    add_mads_python_path()
-    from mads_agent import Agent, MessageType
-
-    agent = Agent("path_following_requirement_test")
-    configure_agent(agent, agent_id=agent_id, key_dir=key_dir)
-
-    # Publish path commands to GUI and listen to FSM feedback for evidence.
-    agent.set_pub_topic(GUI_TOPIC)
-    agent.set_sub_topics(FEEDBACK_TOPICS)
-
-    while agent.init(True) != 0:
-        print("Cannot contact MADS broker. Retrying...")
-        time.sleep(1.0)
-
-    if agent.set_queue_size(200) != 0:
-        raise RuntimeError(f"MADS queue setup failed: {agent.last_error()}")
-
-    result = agent.connect()
-    if result != 0:
-        raise RuntimeError(f"MADS connect failed: {agent.last_error()}")
-
-    agent.set_receive_timeout(100)
-    return agent, MessageType
-
-
 def publish(agent: object, payload: dict) -> None:
     result = agent.publish(payload, topic=GUI_TOPIC)
     if result != 0:
@@ -296,7 +266,6 @@ def publish(agent: object, payload: dict) -> None:
 
 def drain_messages(
     agent: object,
-    message_type: object,
     max_messages: int = 200,
     max_seconds: float = 0.25,
 ) -> None:
@@ -304,7 +273,7 @@ def drain_messages(
     # handle fresh feedback.
     deadline = time.time() + max_seconds
     for _ in range(max_messages):
-        if time.time() >= deadline or agent.receive() == message_type.NONE:
+        if time.time() >= deadline or agent.receive() == MessageType.NONE:
             break
 
 
@@ -326,7 +295,7 @@ def summarize_run(
     # Did the walker actually traverse the path?
     if poses:
         final_pose = poses[-1]
-        final_distance_to_goal = math.hypot(final_pose["x"] - 4.0, final_pose["y"] - 4.0)
+        final_distance_to_goal = math.hypot(final_pose["x"] - TEST_CONFIG["path_scale_x"], final_pose["y"] - TEST_CONFIG["path_scale_y"])
         final_theta = final_pose["theta"]
         max_arc_reached = max(pose["arc_length"] for pose in poses)
         progress_ratio = max_arc_reached / path_total_length if path_total_length > 0 else 0.0
@@ -369,7 +338,6 @@ def summarize_run(
 
 def run_single_test(
     agent: object,
-    message_type: object,
     label: str,
     stiffness: float,
     samples: int,
@@ -386,7 +354,7 @@ def run_single_test(
     print(f"\n{label}: setting idle")
     publish(agent, {"change_mode": "idle"})
     time.sleep(1.0)
-    drain_messages(agent, message_type)
+    drain_messages(agent)
 
     print(f"{label}: sending path_following_mode with K_w={stiffness:g}")
     publish(agent, {"change_mode": "path_following_mode"})
@@ -405,7 +373,7 @@ def run_single_test(
     completion_reason = "hard_timeout"
 
     while time.time() - start < timeout_s:
-        if agent.receive() == message_type.NONE:
+        if agent.receive() == MessageType.NONE:
             if time.time() - last_status >= 2.0 and not active_seen:
                 ego_status = "seen" if ego_state_seen else "not seen"
                 print(
@@ -553,6 +521,7 @@ def show_terminal_plots(report: dict, samples: int) -> None:
     baseline_poses = report["baseline"]["poses"]
     high_poses = report["high_stiffness"]["poses"]
 
+    print()
     # First plot: path geometry and the recorded walker trajectories.
     plt.clf()
     plt.title("Path Following Trajectory")
@@ -563,16 +532,17 @@ def show_terminal_plots(report: dict, samples: int) -> None:
         plt.plot(
             [pose["x"] for pose in baseline_poses],
             [pose["y"] for pose in baseline_poses],
-            label="baseline K_w=25",
+            label=f"baseline K_w={BASELINE_TORSIONAL_STIFFNESS:g}",
         )
     if high_poses:
         plt.plot(
             [pose["x"] for pose in high_poses],
             [pose["y"] for pose in high_poses],
-            label="high stiffness K_w=50",
+            label=f"high stiffness K_w={HIGH_TORSIONAL_STIFFNESS:g}",
         )
     plt.show()
 
+    print()
     # Second plot: distance from the standard path during each run.
     plt.clf()
     plt.title("Offset From Standard Path")
@@ -582,19 +552,19 @@ def show_terminal_plots(report: dict, samples: int) -> None:
         plt.plot(
             list(range(1, len(baseline_poses) + 1)),
             [pose["offset"] for pose in baseline_poses],
-            label="baseline K_w=25",
+            label=f"baseline K_w={BASELINE_TORSIONAL_STIFFNESS:g}",
         )
     if high_poses:
         plt.plot(
             list(range(1, len(high_poses) + 1)),
             [pose["offset"] for pose in high_poses],
-            label="high stiffness K_w=50",
+            label=f"high stiffness K_w={HIGH_TORSIONAL_STIFFNESS:g}",
         )
     longest = max(len(baseline_poses), len(high_poses), 1)
     plt.plot(
         list(range(1, longest + 1)),
         [MAX_ALLOWED_OFFSET_M] * longest,
-        label="2 m limit",
+        label=f"{MAX_ALLOWED_OFFSET_M} m limit",
     )
     plt.show()
 
@@ -624,7 +594,7 @@ def _print_run_summary(run: dict) -> None:
         f"  progress ratio:       {run['progress_ratio']:.3f} "
         f"({run['max_arc_reached_m']:.3f} / {run['path_total_length_m']:.3f} m)"
     )
-    print(f"  within 2 m offset:    {run['passed_offset_requirement']}")
+    print(f"  within {MAX_ALLOWED_OFFSET_M} m offset:    {run['passed_offset_requirement']}")
     print(f"  reached goal:         {run['reached_goal']}")
     print(f"  covered path:         {run['covered_path']}")
     print(f"  walker actually moved:{run['walker_actually_moved']}")
@@ -665,11 +635,45 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    agent, message_type = create_agent(agent_id=args.agent_id, key_dir=args.key_dir)
+    script_dir = Path(__file__).resolve().parent
+    repo_root = script_dir.parent
+    # derive config filename from this script's name: replace .py with .ini
+    script_name = Path(__file__).stem
+    config_filename = script_name + ".ini"
+    config_file = repo_root / "config_files" / config_filename
+    # copy the config file to the expected test
+    shutil.copyfile(config_file, repo_root / "config_files" / "mads.ini")
+
+    start_process_compose_session(
+        repo_root,
+        TEST_CONFIG["session_name"]
+    )
+    time.sleep(TEST_CONFIG["startup_delay_s"])
+
+    # Initialize the agent
+    agent = Agent(script_name)
+    agent.set_id("python")
+    agent.set_settings_timeout(5000)
+    while agent.init(False) != 0:
+        print("Cannot contact broker. Retrying...")
+        print(f"ERROR: {agent.last_error()}")
+        start_process_compose_session(
+            repo_root,
+            TEST_CONFIG["session_name"]
+        )
+        time.sleep(1)
+        
+    if agent.set_queue_size(TEST_CONFIG["message_queue_size"]) != 0:
+        print(agent.last_error())
+        exit()
+        
+    agent.connect()
+    receive_timeout_ms = int(1000)
+    agent.set_receive_timeout(max(receive_timeout_ms, 1))
+
     try:
         baseline = run_single_test(
             agent=agent,
-            message_type=message_type,
             label="baseline",
             stiffness=BASELINE_TORSIONAL_STIFFNESS,
             samples=args.samples,
@@ -680,9 +684,10 @@ def main() -> int:
         if baseline["completion_reason"] == "driver_blocked_before_path_following_active":
             print("\nDriver blocked the baseline run; high-stiffness run skipped.")
         else:
+            print("\n Press whatever key to start the high-stiffness run (or Ctrl+C to exit) ...")
+            input()
             high_stiffness = run_single_test(
                 agent=agent,
-                message_type=message_type,
                 label="high_stiffness",
                 stiffness=HIGH_TORSIONAL_STIFFNESS,
                 samples=args.samples,
