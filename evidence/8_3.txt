@@ -1,0 +1,51 @@
+Started tmux session: process-compose-terminal
+
+Waiting 1.0 seconds to ensure all agents are started...
+
+=== Starting Test: Speed Check ===
+ - Evaluation 1: Measured speed: -0.23 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.23 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.17 m/s <= 1 m/s)
+
+ - Evaluation 2: Measured speed: 0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.16 m/s <= 1 m/s)
+
+ - Evaluation 3: Measured speed: -0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.17 m/s <= 1 m/s)
+
+ - Evaluation 4: Measured speed: 0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.17 m/s <= 1 m/s)
+
+ - Evaluation 5: Measured speed: -0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.17 m/s <= 1 m/s)
+
+ - Evaluation 6: Measured speed: 0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.15 m/s <= 1 m/s)
+
+ - Evaluation 7: Measured speed: -0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.16 m/s <= 1 m/s)
+
+ - Evaluation 8: Measured speed: 0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.16 m/s <= 1 m/s)
+
+ - Evaluation 9: Measured speed: -0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.16 m/s <= 1 m/s)
+
+ - Evaluation 10: Measured speed: 0.22 m/s	Uncertainty: 0.08 m/s
+   [PASS] Speed limit respected. (0.22 m/s <= 0.25 m/s)
+   [PASS] Uncertainty respected. (0.16 m/s <= 1 m/s)
+
+
+=== RESULTS for Test 3 ===
+[PASS] Test 3 Successful! The system is reading the speed correctly within the expected uncertainty.
+
+=== RESULTS for Test 8.3 ===
+[PASS] Test 8.3 Successful! The system is applying the speed limit correctly, even when commanded to go faster.
