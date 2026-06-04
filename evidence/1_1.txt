@@ -1,0 +1,22 @@
+Started tmux session: process-compose-terminal
+
+Waiting 1.0 seconds to ensure all agents are started...
+
+=== Starting Test: Pose Check ===
+ - Waited for user input to proceed to the next evaluation...
+ - Waited for user input to proceed to the next evaluation...
+ - Waited for user input to proceed to the next evaluation...
+ - Evaluation 4: Measured averaged position: 0.01 m	Uncertainty: 0.01 m
+   [PASS] Uncertainty respected. (0.02 m <= 0.05 m)
+
+ - Evaluation 4: Measured averaged theta: -0.00 rad	Uncertainty: 0.00 rad
+   [PASS] Uncertainty respected. (0.01 rad <= 0.08726646259971647 rad)
+
+
+=== RESULTS for Test 1.1 ===
+[PASS] Test 1.1 Successful! The system is reading the position correctly within the expected uncertainty.
+[PASS] Position drift respected. (0.00 m <= 0.5 m)
+
+=== RESULTS for Test 1.2 ===
+[PASS] Test 1.2 Successful! The system is reading the orientation correctly within the expected uncertainty.
+[PASS] Orientation drift respected. (0.00 rad <= 0.2617993877991494 rad)

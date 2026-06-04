@@ -18,11 +18,12 @@ e questo progetto segue il versionamento semantico.
  - Python script test files for test speed limitation and speed computing
  - Python script test files for driver communication
  - Launch files 
+ - Load Cell plugin scaling from ini for each load cell
 
 ### Fixed
  - Service file for installation
  - Driver parsing
- - Test for  
+ - Force calibration plugin saving
 
 ---
 
