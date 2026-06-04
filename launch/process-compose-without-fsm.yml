@@ -1,0 +1,53 @@
+version: "0.5"
+
+processes:
+  broker:
+    command: bash -c "cd ../config_files && mads broker -d"
+
+  loadcells:
+    command: bash -c "sleep 1 && mads source loadcells -r"
+    depends_on:
+      broker:
+        condition: process_started
+
+  driver:
+    command: bash -c "sleep 1 && mads filter driver -r"
+    depends_on:
+      broker:
+        condition: process_started
+
+  portenta:
+    command: bash -c "sleep 1 && mads sink portenta -r"
+    depends_on:
+      broker:
+        condition: process_started
+
+  forces_calibration:
+    command: bash -c "sleep 1 && mads filter forces_calibration -r"
+    depends_on:
+      broker:
+        condition: process_started
+
+  imu:
+    command: bash -c "sleep 1 && mads source sense-hat -r"
+    depends_on:
+      broker:
+        condition: process_started
+
+  imu_calibration:
+    command: bash -c "sleep 1 && mads filter imu_calibration -r"
+    depends_on:
+      broker:
+        condition: process_started
+
+  ego_state:
+    command: bash -c "sleep 1 && mads filter ego_state -r"
+    depends_on:
+      broker:
+        condition: process_started
+
+  unhook_detector:
+    command: bash -c "sleep 1 && mads filter unhookdetector -r"
+    depends_on:
+      broker:
+        condition: process_started

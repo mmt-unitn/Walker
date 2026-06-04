@@ -22,19 +22,17 @@ def stop_tmux_session(session_name: str) -> None:
     )
 
 
-def start_process_compose_session(repo_root, session_name: str, debug: bool = True) -> None:
+def start_process_compose_session(repo_root, session_name: str, filename: str = "process-compose.yml") -> None:
     repo_root = Path(repo_root)
     launch_dir = repo_root / "launch"
-    log_file = launch_dir / "process-compose-debug.log"
 
     kill_port(8080)
     stop_tmux_session(session_name)
-    kill_port(8080)
     time.sleep(2)
 
     cmd = (
         f"cd {launch_dir!s} && "
-        f"process-compose"
+        f"process-compose -f {filename}"
     )
 
     subprocess.run(

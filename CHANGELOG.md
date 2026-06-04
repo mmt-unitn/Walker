@@ -13,10 +13,16 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [v1.3.1] - 07/05/2026 
+## [v1.4.0] - 07/05/2026 
+### Added
+ - Python script test files for test speed limitation and speed computing
+ - Python script test files for driver communication
+ - Launch files 
 
 ### Fixed
-- Correction of the service file for installation
+ - Service file for installation
+ - Driver parsing
+ - Test for  
 
 ---
 
