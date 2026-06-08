@@ -340,18 +340,24 @@ async def run_test(agent, profile):
         if abs(transient_expected_acc_mean) > 1e-9:
             transient_ratio = transient_acc_mean / transient_expected_acc_mean
 
-    # Transient C estimation: samples where velocity is significant
-    # With a dominant in F ≈ M·a + C·v + K·x, isolate C when |v| is high
+    # ── Transient C (damping) estimation ────────────────────────────────────
+    # The full impedance model is: F = M·a + C·v + K·x
+    # When velocity |v| is high (walker moving fast), the C·v term dominates.
+    # We select only those high-velocity samples, subtract the known M·a and K·x
+    # contributions using the target values, then solve for C per sample.
+    # Taking the median across all candidates gives a robust estimate.
     c_mask = (
         (t_fit > TEST_CONFIG["valid_start_time_s"]) &
-        (np.abs(v_fit) > TEST_CONFIG["transient_vel_threshold"])
+        (np.abs(v_fit) > TEST_CONFIG["transient_vel_threshold"])  # high-velocity window
     )
     if np.count_nonzero(c_mask) >= TEST_CONFIG["transient_min_samples"]:
+        # C = (F - M·a - K·x) / v  →  rearranged from the impedance equation
         damping_candidates = (
             F_fit[c_mask] -
             target_M * a_fit[c_mask] -
             target_K * x_fit[c_mask]
         ) / v_fit[c_mask]
+        # Remove non-finite values (division edge cases) and out-of-bounds outliers
         damping_candidates = damping_candidates[np.isfinite(damping_candidates)]
         damping_candidates = damping_candidates[
             (damping_candidates >= bounds["C"][0]) &
@@ -360,18 +366,21 @@ async def run_test(agent, profile):
         if len(damping_candidates) >= 10:
             transient_C = float(np.median(damping_candidates))
 
-    # Transient K estimation: samples where displacement is significant
-    # Isolate K when |x| is high so the spring term dominates
+    # ── Transient K (stiffness) estimation ──────────────────────────────────
+    # Similarly, when displacement |x| is high (walker has moved far from origin),
+    # the K·x spring term dominates. We subtract M·a and C·v and solve for K.
     k_mask = (
         (t_fit > TEST_CONFIG["valid_start_time_s"]) &
-        (np.abs(x_fit) > TEST_CONFIG["transient_pos_threshold"])
+        (np.abs(x_fit) > TEST_CONFIG["transient_pos_threshold"])  # high-displacement window
     )
     if np.count_nonzero(k_mask) >= TEST_CONFIG["transient_min_samples"]:
+        # K = (F - M·a - C·v) / x  →  rearranged from the impedance equation
         stiffness_candidates = (
             F_fit[k_mask] -
             target_M * a_fit[k_mask] -
             target_C * v_fit[k_mask]
         ) / x_fit[k_mask]
+        # Remove non-finite values and out-of-bounds outliers
         stiffness_candidates = stiffness_candidates[np.isfinite(stiffness_candidates)]
         stiffness_candidates = stiffness_candidates[
             (stiffness_candidates >= bounds["K"][0]) &
@@ -549,6 +558,9 @@ async def run_test(agent, profile):
 
     print(f"Validation Mode:         {validation}")
     if validation == "transient":
+        # Validate each parameter using its transient window estimate.
+        # If a window had too few samples the estimate is None → FAIL with a clear message.
+        # Previously C and K compared target against itself here (always PASS) — now fixed.
         if transient_M is None:
             print("[FAIL] Transient mass is unavailable")
             m_pass = False
