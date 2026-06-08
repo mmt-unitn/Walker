@@ -19,9 +19,9 @@ TEST_PROFILES = {
     },
     "12.1": {
         "label": "requirement 12.1 mass-spring-damper",
-        "target_M": 50.0,
-        "target_C": 0.0,
-        "target_K": 0.0,
+        "target_M": 20.0,
+        "target_C": 10.0,
+        "target_K": 10.0,
         "force_source": "total",
         "validation": "transient",
     },
@@ -56,6 +56,8 @@ TEST_CONFIG = {
     "transient_max_time_s": 1.50,
     "transient_fraction": 0.50,
     "transient_max_mass": 100.0,
+    "transient_vel_threshold": 0.05,
+    "transient_pos_threshold": 0.02,
     "fit_min_x_scale": 0.10,
     "fit_min_v_scale": 0.10,
     "velocity_error_weight": 0.50,
@@ -327,6 +329,8 @@ async def run_test(agent, profile):
         )
 
     transient_M = None
+    transient_C = None
+    transient_K = None
     transient_acc_mean = None
     transient_expected_acc_mean = None
     transient_ratio = None
@@ -347,6 +351,50 @@ async def run_test(agent, profile):
         transient_expected_acc_mean = float(np.mean(a_des_fit[transient_mask]))
         if abs(transient_expected_acc_mean) > 1e-9:
             transient_ratio = transient_acc_mean / transient_expected_acc_mean
+
+    # ── Transient C (damping) estimation ────────────────────────────────────
+    # When velocity |v| is high, C·v dominates. Subtract M·a and K·x
+    # contributions using target values and solve for C per sample.
+    c_mask = (
+        (t_fit > TEST_CONFIG["valid_start_time_s"]) &
+        (np.abs(v_fit) > TEST_CONFIG["transient_vel_threshold"])
+    )
+    if np.count_nonzero(c_mask) >= TEST_CONFIG["transient_min_samples"]:
+        # C = (F - M·a - K·x) / v
+        damping_candidates = (
+            F_fit[c_mask] -
+            target_M * a_fit[c_mask] -
+            target_K * x_fit[c_mask]
+        ) / v_fit[c_mask]
+        damping_candidates = damping_candidates[np.isfinite(damping_candidates)]
+        damping_candidates = damping_candidates[
+            (damping_candidates >= bounds["C"][0]) &
+            (damping_candidates <= bounds["C"][1])
+        ]
+        if len(damping_candidates) >= 10:
+            transient_C = float(np.median(damping_candidates))
+
+    # ── Transient K (stiffness) estimation ──────────────────────────────────
+    # When displacement |x| is high, K·x dominates. Subtract M·a and C·v
+    # contributions using target values and solve for K per sample.
+    k_mask = (
+        (t_fit > TEST_CONFIG["valid_start_time_s"]) &
+        (np.abs(x_fit) > TEST_CONFIG["transient_pos_threshold"])
+    )
+    if np.count_nonzero(k_mask) >= TEST_CONFIG["transient_min_samples"]:
+        # K = (F - M·a - C·v) / x
+        stiffness_candidates = (
+            F_fit[k_mask] -
+            target_M * a_fit[k_mask] -
+            target_C * v_fit[k_mask]
+        ) / x_fit[k_mask]
+        stiffness_candidates = stiffness_candidates[np.isfinite(stiffness_candidates)]
+        stiffness_candidates = stiffness_candidates[
+            (stiffness_candidates >= bounds["K"][0]) &
+            (stiffness_candidates <= bounds["K"][1])
+        ]
+        if len(stiffness_candidates) >= 10:
+            transient_K = float(np.median(stiffness_candidates))
 
     def clamp(value, lower, upper):
         return min(max(float(value), lower), upper)
@@ -460,6 +508,16 @@ async def run_test(agent, profile):
               f"ratio {transient_ratio:.3f})")
     else:
         print("Transient Mass Diag:     unavailable")
+    if transient_C is not None:
+        print(f"Transient Damping Diag:  {transient_C:.3f} Ns/m "
+              f"({np.count_nonzero(c_mask)} samples)")
+    else:
+        print("Transient Damping Diag:  unavailable")
+    if transient_K is not None:
+        print(f"Transient Stiffness Diag:{transient_K:.3f} N/m "
+              f"({np.count_nonzero(k_mask)} samples)")
+    else:
+        print("Transient Stiffness Diag: unavailable")
     print(f"Trajectory RMSE x/v:     {x_rmse:.4f} m / {v_rmse:.4f} m/s")
     print(f"Regression Rank/Cond:    {rank}/{cond:.2f}")
     print(f"Samples Used/Total:      {len(t_fit)}/{len(t_arr)}")
@@ -515,8 +573,16 @@ async def run_test(agent, profile):
             m_pass = False
         else:
             m_pass = check_tolerance("Transient mass", transient_M, target_M)
-        c_pass = check_tolerance("Damping target", target_C, target_C)
-        k_pass = check_tolerance("Stiffness target", target_K, target_K)
+        if transient_C is None:
+            print("[FAIL] Transient damping is unavailable")
+            c_pass = False
+        else:
+            c_pass = check_tolerance("Transient damping", transient_C, target_C)
+        if transient_K is None:
+            print("[FAIL] Transient stiffness is unavailable")
+            k_pass = False
+        else:
+            k_pass = check_tolerance("Transient stiffness", transient_K, target_K)
     else:
         m_pass = check_tolerance("Mass", est_M, target_M)
         c_pass = check_tolerance("Damping", est_C, target_C)
@@ -524,9 +590,9 @@ async def run_test(agent, profile):
     
     print("\n--------------------------")
     if m_pass and c_pass and k_pass:
-        print("[PASS] Test 12.1 Successful! All parameters match the ideal model.")
+        print(f"[PASS] {profile['label']} — All parameters within tolerance.")
     else:
-        print("[FAIL] Test 12.1 Failed. One or more parameters are out of bounds.")
+        print(f"[FAIL] {profile['label']} — One or more parameters out of bounds.")
     print("--------------------------")
 
 async def main():
