@@ -304,6 +304,13 @@ async def run_test(agent, profile):
     v_fit = v_arr[valid_mask]
     x_fit = x_arr[valid_mask]
 
+    # ── OLS regression (diagnostic only) ────────────────────────────────────
+    # Fits F = M·a + C·v + K·x across ALL samples simultaneously.
+    # This is unreliable for C and K because:
+    #   1. The M·a term dominates (mass force >> damping and spring forces)
+    #   2. a, v, x are correlated (v = ∫a dt, x = ∫v dt), so the regression
+    #      matrix is ill-conditioned and C/K estimates absorb noise.
+    # OLS values are kept only as a diagnostic reference — not used for validation.
     A_matrix = np.column_stack((a_fit, v_fit, x_fit))
     coeffs, _, rank, singular_values = np.linalg.lstsq(A_matrix, F_fit, rcond=None)
     ols_M, est_C, est_K = coeffs
@@ -328,6 +335,13 @@ async def run_test(agent, profile):
             (acc_aligned > TEST_CONFIG["transient_acc_fallback_threshold"])
         )
 
+    # ── Transient M (mass) estimation ───────────────────────────────────────
+    # At the start of the excitation (high acceleration, low v and x),
+    # the model simplifies to: F ≈ M·a  (C·v and K·x are negligible).
+    # We pick only those high-acceleration samples, subtract the small C and K
+    # contributions using target values, then compute M = F / a per sample.
+    # Taking the median rejects outliers (spikes, noise).
+    # This is why M worked well even before — the window isolates it cleanly.
     transient_M = None
     transient_C = None
     transient_K = None
@@ -335,6 +349,7 @@ async def run_test(agent, profile):
     transient_expected_acc_mean = None
     transient_ratio = None
     if np.count_nonzero(transient_mask) >= TEST_CONFIG["transient_min_samples"]:
+        # M = (F - C·v - K·x) / a  →  rearranged from F = M·a + C·v + K·x
         mass_candidates = (
             F_fit[transient_mask] -
             target_C * v_fit[transient_mask] -
@@ -353,19 +368,24 @@ async def run_test(agent, profile):
             transient_ratio = transient_acc_mean / transient_expected_acc_mean
 
     # ── Transient C (damping) estimation ────────────────────────────────────
-    # When velocity |v| is high, C·v dominates. Subtract M·a and K·x
-    # contributions using target values and solve for C per sample.
+    # WHY OLS FAILED FOR C: when M·a dominates the signal, the regression
+    # cannot separate C·v from noise — C absorbs whatever is left after M is fit.
+    # FIX: select only samples where velocity is high (walker moving fast).
+    # In that window C·v is relatively large compared to the other terms.
+    # We subtract the known M·a and K·x contributions (using target values)
+    # and solve for C = (F - M·a - K·x) / v per sample, then take the median.
     c_mask = (
         (t_fit > TEST_CONFIG["valid_start_time_s"]) &
-        (np.abs(v_fit) > TEST_CONFIG["transient_vel_threshold"])
+        (np.abs(v_fit) > TEST_CONFIG["transient_vel_threshold"])  # high-velocity window
     )
     if np.count_nonzero(c_mask) >= TEST_CONFIG["transient_min_samples"]:
-        # C = (F - M·a - K·x) / v
+        # Rearranged from F = M·a + C·v + K·x  →  C = (F - M·a - K·x) / v
         damping_candidates = (
             F_fit[c_mask] -
             target_M * a_fit[c_mask] -
             target_K * x_fit[c_mask]
         ) / v_fit[c_mask]
+        # Discard non-finite values (division by near-zero v) and physical outliers
         damping_candidates = damping_candidates[np.isfinite(damping_candidates)]
         damping_candidates = damping_candidates[
             (damping_candidates >= bounds["C"][0]) &
@@ -375,19 +395,23 @@ async def run_test(agent, profile):
             transient_C = float(np.median(damping_candidates))
 
     # ── Transient K (stiffness) estimation ──────────────────────────────────
-    # When displacement |x| is high, K·x dominates. Subtract M·a and C·v
-    # contributions using target values and solve for K per sample.
+    # WHY OLS FAILED FOR K: same reason as C — K·x is a small term compared
+    # to M·a, so it is poorly observable across the full dataset.
+    # FIX: select only samples where displacement |x| is large (walker has
+    # moved far from origin). In that window K·x is relatively significant.
+    # Subtract M·a and C·v and solve for K = (F - M·a - C·v) / x per sample.
     k_mask = (
         (t_fit > TEST_CONFIG["valid_start_time_s"]) &
-        (np.abs(x_fit) > TEST_CONFIG["transient_pos_threshold"])
+        (np.abs(x_fit) > TEST_CONFIG["transient_pos_threshold"])  # high-displacement window
     )
     if np.count_nonzero(k_mask) >= TEST_CONFIG["transient_min_samples"]:
-        # K = (F - M·a - C·v) / x
+        # Rearranged from F = M·a + C·v + K·x  →  K = (F - M·a - C·v) / x
         stiffness_candidates = (
             F_fit[k_mask] -
             target_M * a_fit[k_mask] -
             target_C * v_fit[k_mask]
         ) / x_fit[k_mask]
+        # Discard non-finite values (division by near-zero x) and physical outliers
         stiffness_candidates = stiffness_candidates[np.isfinite(stiffness_candidates)]
         stiffness_candidates = stiffness_candidates[
             (stiffness_candidates >= bounds["K"][0]) &
