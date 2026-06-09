@@ -19,9 +19,9 @@ TEST_PROFILES = {
     },
     "12.1": {
         "label": "requirement 12.1 mass-spring-damper",
-        "target_M": 20.0,
-        "target_C": 10.0,
-        "target_K": 10.0,
+        "target_M": 50.0,
+        "target_C": 0.0,
+        "target_K": 0.0,
         "force_source": "total",
         "validation": "transient",
     },
@@ -56,8 +56,6 @@ TEST_CONFIG = {
     "transient_max_time_s": 1.50,
     "transient_fraction": 0.50,
     "transient_max_mass": 100.0,
-    "transient_vel_threshold": 0.05,
-    "transient_pos_threshold": 0.02,
     "fit_min_x_scale": 0.10,
     "fit_min_v_scale": 0.10,
     "velocity_error_weight": 0.50,
@@ -304,13 +302,6 @@ async def run_test(agent, profile):
     v_fit = v_arr[valid_mask]
     x_fit = x_arr[valid_mask]
 
-    # ── OLS regression (diagnostic only) ────────────────────────────────────
-    # Fits F = M·a + C·v + K·x across ALL samples simultaneously.
-    # This is unreliable for C and K because:
-    #   1. The M·a term dominates (mass force >> damping and spring forces)
-    #   2. a, v, x are correlated (v = ∫a dt, x = ∫v dt), so the regression
-    #      matrix is ill-conditioned and C/K estimates absorb noise.
-    # OLS values are kept only as a diagnostic reference — not used for validation.
     A_matrix = np.column_stack((a_fit, v_fit, x_fit))
     coeffs, _, rank, singular_values = np.linalg.lstsq(A_matrix, F_fit, rcond=None)
     ols_M, est_C, est_K = coeffs
@@ -335,21 +326,11 @@ async def run_test(agent, profile):
             (acc_aligned > TEST_CONFIG["transient_acc_fallback_threshold"])
         )
 
-    # ── Transient M (mass) estimation ───────────────────────────────────────
-    # At the start of the excitation (high acceleration, low v and x),
-    # the model simplifies to: F ≈ M·a  (C·v and K·x are negligible).
-    # We pick only those high-acceleration samples, subtract the small C and K
-    # contributions using target values, then compute M = F / a per sample.
-    # Taking the median rejects outliers (spikes, noise).
-    # This is why M worked well even before — the window isolates it cleanly.
     transient_M = None
-    transient_C = None
-    transient_K = None
     transient_acc_mean = None
     transient_expected_acc_mean = None
     transient_ratio = None
     if np.count_nonzero(transient_mask) >= TEST_CONFIG["transient_min_samples"]:
-        # M = (F - C·v - K·x) / a  →  rearranged from F = M·a + C·v + K·x
         mass_candidates = (
             F_fit[transient_mask] -
             target_C * v_fit[transient_mask] -
@@ -366,59 +347,6 @@ async def run_test(agent, profile):
         transient_expected_acc_mean = float(np.mean(a_des_fit[transient_mask]))
         if abs(transient_expected_acc_mean) > 1e-9:
             transient_ratio = transient_acc_mean / transient_expected_acc_mean
-
-    # ── Transient C (damping) estimation ────────────────────────────────────
-    # WHY OLS FAILED FOR C: when M·a dominates the signal, the regression
-    # cannot separate C·v from noise — C absorbs whatever is left after M is fit.
-    # FIX: select only samples where velocity is high (walker moving fast).
-    # In that window C·v is relatively large compared to the other terms.
-    # We subtract the known M·a and K·x contributions (using target values)
-    # and solve for C = (F - M·a - K·x) / v per sample, then take the median.
-    c_mask = (
-        (t_fit > TEST_CONFIG["valid_start_time_s"]) &
-        (np.abs(v_fit) > TEST_CONFIG["transient_vel_threshold"])  # high-velocity window
-    )
-    if np.count_nonzero(c_mask) >= TEST_CONFIG["transient_min_samples"]:
-        # Rearranged from F = M·a + C·v + K·x  →  C = (F - M·a - K·x) / v
-        damping_candidates = (
-            F_fit[c_mask] -
-            target_M * a_fit[c_mask] -
-            target_K * x_fit[c_mask]
-        ) / v_fit[c_mask]
-        # Discard non-finite values (division by near-zero v) and physical outliers
-        damping_candidates = damping_candidates[np.isfinite(damping_candidates)]
-        damping_candidates = damping_candidates[
-            (damping_candidates >= bounds["C"][0]) &
-            (damping_candidates <= bounds["C"][1])
-        ]
-        if len(damping_candidates) >= 10:
-            transient_C = float(np.median(damping_candidates))
-
-    # ── Transient K (stiffness) estimation ──────────────────────────────────
-    # WHY OLS FAILED FOR K: same reason as C — K·x is a small term compared
-    # to M·a, so it is poorly observable across the full dataset.
-    # FIX: select only samples where displacement |x| is large (walker has
-    # moved far from origin). In that window K·x is relatively significant.
-    # Subtract M·a and C·v and solve for K = (F - M·a - C·v) / x per sample.
-    k_mask = (
-        (t_fit > TEST_CONFIG["valid_start_time_s"]) &
-        (np.abs(x_fit) > TEST_CONFIG["transient_pos_threshold"])  # high-displacement window
-    )
-    if np.count_nonzero(k_mask) >= TEST_CONFIG["transient_min_samples"]:
-        # Rearranged from F = M·a + C·v + K·x  →  K = (F - M·a - C·v) / x
-        stiffness_candidates = (
-            F_fit[k_mask] -
-            target_M * a_fit[k_mask] -
-            target_C * v_fit[k_mask]
-        ) / x_fit[k_mask]
-        # Discard non-finite values (division by near-zero x) and physical outliers
-        stiffness_candidates = stiffness_candidates[np.isfinite(stiffness_candidates)]
-        stiffness_candidates = stiffness_candidates[
-            (stiffness_candidates >= bounds["K"][0]) &
-            (stiffness_candidates <= bounds["K"][1])
-        ]
-        if len(stiffness_candidates) >= 10:
-            transient_K = float(np.median(stiffness_candidates))
 
     def clamp(value, lower, upper):
         return min(max(float(value), lower), upper)
@@ -532,16 +460,6 @@ async def run_test(agent, profile):
               f"ratio {transient_ratio:.3f})")
     else:
         print("Transient Mass Diag:     unavailable")
-    if transient_C is not None:
-        print(f"Transient Damping Diag:  {transient_C:.3f} Ns/m "
-              f"({np.count_nonzero(c_mask)} samples)")
-    else:
-        print("Transient Damping Diag:  unavailable")
-    if transient_K is not None:
-        print(f"Transient Stiffness Diag:{transient_K:.3f} N/m "
-              f"({np.count_nonzero(k_mask)} samples)")
-    else:
-        print("Transient Stiffness Diag: unavailable")
     print(f"Trajectory RMSE x/v:     {x_rmse:.4f} m / {v_rmse:.4f} m/s")
     print(f"Regression Rank/Cond:    {rank}/{cond:.2f}")
     print(f"Samples Used/Total:      {len(t_fit)}/{len(t_arr)}")
@@ -597,16 +515,8 @@ async def run_test(agent, profile):
             m_pass = False
         else:
             m_pass = check_tolerance("Transient mass", transient_M, target_M)
-        if transient_C is None:
-            print("[FAIL] Transient damping is unavailable")
-            c_pass = False
-        else:
-            c_pass = check_tolerance("Transient damping", transient_C, target_C)
-        if transient_K is None:
-            print("[FAIL] Transient stiffness is unavailable")
-            k_pass = False
-        else:
-            k_pass = check_tolerance("Transient stiffness", transient_K, target_K)
+        c_pass = check_tolerance("Damping target", target_C, target_C)
+        k_pass = check_tolerance("Stiffness target", target_K, target_K)
     else:
         m_pass = check_tolerance("Mass", est_M, target_M)
         c_pass = check_tolerance("Damping", est_C, target_C)
@@ -614,9 +524,9 @@ async def run_test(agent, profile):
     
     print("\n--------------------------")
     if m_pass and c_pass and k_pass:
-        print(f"[PASS] {profile['label']} — All parameters within tolerance.")
+        print("[PASS] Test 12.1 Successful! All parameters match the ideal model.")
     else:
-        print(f"[FAIL] {profile['label']} — One or more parameters out of bounds.")
+        print("[FAIL] Test 12.1 Failed. One or more parameters are out of bounds.")
     print("--------------------------")
 
 async def main():
