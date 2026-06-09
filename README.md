@@ -65,6 +65,44 @@ The `imu_plugin` is fetched from the `sense-hat_plugin` repository. For the requ
 
 If your setup requires Phidget22, follow the installation procedure documented in the referenced [Phidget22 repository](https://github.com/MatteoBonetto/Phidget22/tree/897d367527e2bce3e7ca2bc8521db213b275d294).
 
+### **Remove root permission to files for serial communication**
+  1. Accessing `ttyACM*` Without `Root`
+      - By default, `ttyACM*` is owned by root and belongs to the dialout group. Add Your User to the dialout Group:
+         ```bash
+         sudo usermod -aG dialout $USER
+         ```
+      - Change from LowLevel code `serialSettings.name = "ttyACM_YOUR_CONNECTION";` depending on where the USB must communicate
+         To check what is your connection type:
+        ```bash
+        ls -l /dev/serial/by-id/
+        ```
+  
+  3. Persistent Permission Changes: Use udev rules to ensure the device always has desired permissions:
+      - Create a new udev rules file for Phidget communication:
+         ```bash
+        sudo nano /etc/udev/rules.d/99-libphidget22.rules
+         ```
+
+      - Add the following rule:
+        ```bash
+        All current and future Phidgets - Vendor = 0x06c2, Product = 0x0030 - 0x00af
+        SUBSYSTEMS=="usb", ACTION=="add", ATTRS{idVendor}=="06c2", ATTRS{idProduct}=="00[3-a][0-f]", MODE="666" 
+         ```
+      - Create a new udev rules file for serial communication:
+         ```bash
+        sudo nano /etc/udev/rules.d/99-usb-serial.rules
+         ```
+
+      - Add the following rule for Drivers:
+        ```bash
+        SUBSYSTEM=="usb", ACTION=="add" ATTR{idVendor}=="20d2", ATTR{idProduct}=="5740", MODE="666"
+         ```
+      - Add the following rule for IMUs:
+        ```bash
+        SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="b6220533b210e9118d4a597387f8ef3e", SYMLINK+="serial_cp210x"
+         ```
+      - Reboot to apply the rule 
+
 ## Build and install
 
 ### Configure
