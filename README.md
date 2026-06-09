@@ -71,8 +71,7 @@ If your setup requires Phidget22, follow the installation procedure documented i
          ```bash
          sudo usermod -aG dialout $USER
          ```
-      - Change from LowLevel code `serialSettings.name = "ttyACM_YOUR_CONNECTION";` depending on where the USB must communicate
-         To check what is your connection type:
+      - To check what is your connection type:
         ```bash
         ls -l /dev/serial/by-id/
         ```
@@ -93,13 +92,10 @@ If your setup requires Phidget22, follow the installation procedure documented i
         sudo nano /etc/udev/rules.d/99-usb-serial.rules
          ```
 
-      - Add the following rule for Drivers:
+      - Add the following rule for Drivers and Portenta:
         ```bash
-        SUBSYSTEM=="usb", ACTION=="add" ATTR{idVendor}=="20d2", ATTR{idProduct}=="5740", MODE="666"
-         ```
-      - Add the following rule for IMUs:
-        ```bash
-        SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="b6220533b210e9118d4a597387f8ef3e", SYMLINK+="serial_cp210x"
+        SUBSYSTEM=="tty", ATTRS{idVendor}=="20d2", ATTRS{idProduct}=="5740", SYMLINK+="drivers", MODE="0666"
+        SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="025b", ATTRS{serial}=="004200473033510A34323437", SYMLINK+="portenta", MODE="0666"
          ```
       - Reboot to apply the rule 
 
