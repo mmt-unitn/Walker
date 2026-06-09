@@ -1,0 +1,1090 @@
+{
+  "FSM/mode": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "mode": {
+        "type": "string"
+      },
+      "reason": {
+        "description": "",
+        "type": "string"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "mode",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "FSM/odometry": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "reset": {
+        "description": "",
+        "type": "boolean"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "timecode",
+      "timestamp",
+      "reset"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "FSM/path_planning": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "intersection": {
+        "description": "",
+        "properties": {
+          "end_idx": {
+            "type": "number"
+          },
+          "start_idx": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "end_idx",
+          "start_idx"
+        ],
+        "type": "object"
+      },
+      "reference": {
+        "items": {
+          "type": "number"
+        },
+        "minItems": 0,
+        "type": "array"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      },
+      "walker_pose": {
+        "items": {
+          "type": "number"
+        },
+        "minItems": 0,
+        "type": "array"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "reference",
+      "timecode",
+      "timestamp",
+      "walker_pose"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "FSM/portenta": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "cmd": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "cmd",
+      "hostname",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "FSM/set_point": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "mode": {
+        "type": "string"
+      },
+      "sp": {
+        "properties": {
+          "dx": {
+            "type": "number"
+          },
+          "sx": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "dx",
+          "sx"
+        ],
+        "type": "object"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "mode",
+      "sp",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "GUI": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "change_mode": {
+        "type": "string"
+      },
+      "delta_theta": {
+        "description": "",
+        "properties": {
+          "difference_function": {
+            "type": "string"
+          },
+          "reference_function": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "difference_function",
+          "reference_function"
+        ],
+        "type": "object"
+      },
+      "hostname": {
+        "description": "",
+        "type": "string"
+      },
+      "impedance_params": {
+        "description": "",
+        "properties": {
+          "C_Wr": {
+            "type": "number"
+          },
+          "C_v": {
+            "type": "number"
+          },
+          "C_vb": {
+            "type": "number"
+          },
+          "C_w": {
+            "type": "number"
+          },
+          "K_Wr": {
+            "type": "number"
+          },
+          "K_v": {
+            "type": "number"
+          },
+          "K_vb": {
+            "type": "number"
+          },
+          "K_w": {
+            "type": "number"
+          },
+          "M_Wr": {
+            "type": "number"
+          },
+          "M_v": {
+            "type": "number"
+          },
+          "M_vb": {
+            "type": "number"
+          },
+          "M_w": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "C_Wr",
+          "C_v",
+          "C_vb",
+          "C_w",
+          "K_Wr",
+          "K_v",
+          "K_vb",
+          "K_w",
+          "M_Wr",
+          "M_v",
+          "M_vb",
+          "M_w"
+        ],
+        "type": "object"
+      },
+      "incipit": {
+        "description": "",
+        "properties": {
+          "F0_max": {
+            "type": "number"
+          },
+          "g": {
+            "type": "number"
+          },
+          "incipit_function": {
+            "type": "string"
+          },
+          "incipit_parameter": {
+            "type": "number"
+          },
+          "v_considered_as_moving": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "F0_max",
+          "g",
+          "incipit_function",
+          "incipit_parameter",
+          "v_considered_as_moving"
+        ],
+        "type": "object"
+      },
+      "path": {
+        "description": "",
+        "properties": {
+          "inverse_mode": {
+            "type": "boolean"
+          },
+          "theta": {
+            "items": {
+              "type": "number"
+            },
+            "minItems": 0,
+            "type": "array"
+          },
+          "total": {
+            "items": {
+              "type": "number"
+            },
+            "minItems": 0,
+            "type": "array"
+          },
+          "x": {
+            "items": {
+              "type": "number"
+            },
+            "minItems": 0,
+            "type": "array"
+          },
+          "y": {
+            "items": {
+              "type": "number"
+            },
+            "minItems": 0,
+            "type": "array"
+          }
+        },
+        "required": [
+          "inverse_mode",
+          "theta",
+          "total",
+          "x",
+          "y"
+        ],
+        "type": "object"
+      },
+      "start_calibration": {
+        "description": "",
+        "type": "boolean"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "timecode",
+      "timestamp",
+      "hostname"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "Imu": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "accel": {
+        "items": {
+          "type": "number"
+        },
+        "minItems": 0,
+        "type": "array"
+      },
+      "agent_id": {
+        "type": "string"
+      },
+      "compass": {
+        "description": "",
+        "items": {
+          "type": "number"
+        },
+        "minItems": 0,
+        "type": "array"
+      },
+      "fusionPose": {
+        "description": "",
+        "items": {
+          "type": "number"
+        },
+        "minItems": 0,
+        "type": "array"
+      },
+      "gyro": {
+        "items": {
+          "type": "number"
+        },
+        "minItems": 0,
+        "type": "array"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "accel",
+      "agent_id",
+      "gyro",
+      "hostname",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "calibrated_imu": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "acc_x": {
+        "type": "number"
+      },
+      "acc_y": {
+        "type": "number"
+      },
+      "agent_id": {
+        "type": "string"
+      },
+      "gyro": {
+        "type": "number"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "acc_x",
+      "acc_y",
+      "agent_id",
+      "gyro",
+      "hostname",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "driver": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "currents": {
+        "description": "",
+        "properties": {
+          "left": {
+            "type": "number"
+          },
+          "right": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "type": "object"
+      },
+      "encoders": {
+        "description": "",
+        "properties": {
+          "left": {
+            "type": "number"
+          },
+          "right": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "type": "object"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "issues": {
+        "description": "",
+        "type": "string"
+      },
+      "speeds": {
+        "description": "",
+        "properties": {
+          "left": {
+            "type": "number"
+          },
+          "right": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "type": "object"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      },
+      "voltage": {
+        "description": "",
+        "type": "number"
+      },
+      "warning": {
+        "description": "",
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "ego_state": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "H": {
+        "description": "",
+        "items": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 0,
+          "type": "array"
+        },
+        "minItems": 0,
+        "type": "array"
+      },
+      "agent_id": {
+        "type": "string"
+      },
+      "ego_state": {
+        "properties": {
+          "F_x": {
+            "type": "number"
+          },
+          "T": {
+            "type": "number"
+          },
+          "acceleration": {
+            "type": "number"
+          },
+          "angular_acceleration": {
+            "type": "number"
+          },
+          "angular_speed": {
+            "type": "number"
+          },
+          "encoder_left": {
+            "type": "number"
+          },
+          "encoder_right": {
+            "type": "number"
+          },
+          "k_delta_ref": {
+            "type": "number"
+          },
+          "k_theta_ref": {
+            "type": "number"
+          },
+          "space_linear": {
+            "type": "number"
+          },
+          "speed": {
+            "type": "number"
+          },
+          "theta": {
+            "type": "number"
+          },
+          "time_interval": {
+            "type": "number"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "y",
+          "x",
+          "time_interval",
+          "F_x",
+          "T",
+          "angular_speed",
+          "space_linear",
+          "speed",
+          "theta"
+        ],
+        "type": "object"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "slipping_detection": {
+        "description": "",
+        "type": "boolean"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "timecode",
+      "timestamp",
+      "slipping_detection"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "forces_calibrated": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "forces": {
+        "properties": {
+          "mono": {
+            "properties": {
+              "back_left": {
+                "type": "number"
+              },
+              "back_right": {
+                "type": "number"
+              },
+              "front_left": {
+                "type": "number"
+              },
+              "front_right": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "back_left",
+              "back_right",
+              "front_left",
+              "front_right"
+            ],
+            "type": "object"
+          },
+          "triaxis_l": {
+            "properties": {
+              "fx_l": {
+                "type": "number"
+              },
+              "fy_l": {
+                "type": "number"
+              },
+              "fz_l": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "fx_l",
+              "fy_l",
+              "fz_l"
+            ],
+            "type": "object"
+          },
+          "triaxis_r": {
+            "properties": {
+              "fx_r": {
+                "type": "number"
+              },
+              "fy_r": {
+                "type": "number"
+              },
+              "fz_r": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "fx_r",
+              "fy_r",
+              "fz_r"
+            ],
+            "type": "object"
+          },
+          "triaxis_side": {
+            "properties": {
+              "fx_l_side": {
+                "type": "number"
+              },
+              "fx_r_side": {
+                "type": "number"
+              },
+              "fy_l_side": {
+                "type": "number"
+              },
+              "fy_r_side": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "fx_l_side",
+              "fx_r_side",
+              "fy_l_side",
+              "fy_r_side"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mono",
+          "triaxis_l",
+          "triaxis_r",
+          "triaxis_side"
+        ],
+        "type": "object"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "forces",
+      "hostname",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "loadcells": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "forces": {
+        "properties": {
+          "mono": {
+            "properties": {
+              "back_left": {
+                "type": "number"
+              },
+              "back_right": {
+                "type": "number"
+              },
+              "front_left": {
+                "type": "number"
+              },
+              "front_right": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "back_left",
+              "back_right",
+              "front_left",
+              "front_right"
+            ],
+            "type": "object"
+          },
+          "triaxis_l": {
+            "properties": {
+              "fx_l": {
+                "type": "number"
+              },
+              "fy_l": {
+                "type": "number"
+              },
+              "fz_l": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "fx_l",
+              "fy_l",
+              "fz_l"
+            ],
+            "type": "object"
+          },
+          "triaxis_r": {
+            "properties": {
+              "fx_r": {
+                "type": "number"
+              },
+              "fy_r": {
+                "type": "number"
+              },
+              "fz_r": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "fx_r",
+              "fy_r",
+              "fz_r"
+            ],
+            "type": "object"
+          },
+          "triaxis_side": {
+            "properties": {
+              "fx_l_side": {
+                "type": "number"
+              },
+              "fx_r_side": {
+                "type": "number"
+              },
+              "fy_l_side": {
+                "type": "number"
+              },
+              "fy_r_side": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "fx_l_side",
+              "fx_r_side",
+              "fy_l_side",
+              "fy_r_side"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mono",
+          "triaxis_l",
+          "triaxis_r",
+          "triaxis_side"
+        ],
+        "type": "object"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "forces",
+      "hostname",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "unhookdetector": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "si": {
+        "description": "",
+        "type": "boolean"
+      },
+      "t1": {
+        "description": "",
+        "type": "number"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      },
+      "unbalance": {
+        "description": "",
+        "type": "number"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "timecode",
+      "timestamp",
+      "si"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  },
+  "watchdog": {
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "description": "Generated from JSON data",
+    "properties": {
+      "agent_id": {
+        "type": "string"
+      },
+      "hostname": {
+        "type": "string"
+      },
+      "status": {
+        "type": "boolean"
+      },
+      "timecode": {
+        "type": "number"
+      },
+      "timestamp": {
+        "properties": {
+          "$date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "$date"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "agent_id",
+      "hostname",
+      "status",
+      "timecode",
+      "timestamp"
+    ],
+    "title": "Generated Schema",
+    "type": "object"
+  }
+}
