@@ -19,7 +19,7 @@ mads source sense-hat --crypto --key_broker=broker --key_client=broker --keys_di
 mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR} & \
 mads filter unhookdetector --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR} & \
 mads source watchdog --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR} & \
-exec "$(mads -p)/bin/mads-NovaWalk-FSM" --keys_dir=$${MADS_KEYS_DIR}"
+exec $(mads -p)/bin/mads-NovaWalk-FSM --keys_dir=$${MADS_KEYS_DIR}"
 
 [Install]
 WantedBy=multi-user.target
