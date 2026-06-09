@@ -134,7 +134,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   FSM
   GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
-  GIT_TAG 21cca54
+  GIT_TAG bc0d9f3
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 

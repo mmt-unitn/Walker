@@ -15,6 +15,7 @@ The build includes a set of Walker plugins plus the **FSM** core component, whic
 - `ego_state_plugin`
 - `harness_detachment_plugin`
 - `watchdog_plugin`
+- `imu_calibration_plugin`
 
 ### Core component
 - `FSM` — monolithic core module, not a plugin
@@ -84,13 +85,13 @@ The default is `ON`.
 Example with full clones:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=OFF
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=OFF
 ```
 
 To disable systemd service installation, explicitly set:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF
 ```
 
 ### Build
@@ -128,7 +129,7 @@ Current default behavior in `CMakeLists.txt`:
 If you do **not** want service installation, configure with:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF
 ```
 
 Because the service is installed into the systemd system directory, the install step must be run with `sudo`.
