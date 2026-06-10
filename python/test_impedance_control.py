@@ -583,9 +583,9 @@ async def run_test(agent, profile):
     
     print("\n--------------------------")
     if m_pass and c_pass and k_pass:
-        print("[PASS] Test 12.1 Successful! All parameters match the ideal model.")
+        print(f"[PASS] {profile['label']} — All parameters within tolerance.")
     else:
-        print("[FAIL] Test 12.1 Failed. One or more parameters are out of bounds.")
+        print(f"[FAIL] {profile['label']} — One or more parameters out of bounds.")
     print("--------------------------")
 
 async def main():
