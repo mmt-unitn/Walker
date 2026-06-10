@@ -63,7 +63,12 @@ The `imu_plugin` is fetched from the `sense-hat_plugin` repository. For the requ
 
 ### Phidget22
 
-If your setup requires Phidget22, follow the installation procedure documented in the referenced [Phidget22 repository](https://github.com/MatteoBonetto/Phidget22/tree/897d367527e2bce3e7ca2bc8521db213b275d294).
+If your setup requires Phidget22, paste the following commands
+```bash
+curl -fsSL https://www.phidgets.com/downloads/setup_linux | sudo -E bash -
+sudo apt install -y libphidget22
+```
+or follow the installation procedure documented in the referenced [Phidget22 repository](https://github.com/MatteoBonetto/Phidget22/tree/897d367527e2bce3e7ca2bc8521db213b275d294).
 
 ### **Remove root permission to files for serial communication**
   1. Accessing `ttyACM*` Without `Root`
@@ -106,7 +111,7 @@ If your setup requires Phidget22, follow the installation procedure documented i
 Use:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=./usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 ```
 
 A CMake cache variable is available to control whether `FetchContent` uses shallow or full Git clones for dependencies:
@@ -119,13 +124,13 @@ The default is `ON`.
 Example with full clones:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=OFF
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 ```
 
 To disable systemd service installation, explicitly set:
 
 ```bash
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DFETCHCONTENT_SHALLOW_CLONE=ON -DINSTALL_MADS_SERVICE=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 ```
 
 ### Build
