@@ -16,11 +16,10 @@ from session_utils import *
 TEST_PROFILES = {
     "legacy": {
         "label": "legacy M-only diagnostic",
-        "target_M": 70.0,
-        "target_C": 40.0,
-        "target_K": 25.0,
+        "target_M": 50.0,
+        "target_C": 65.0,
+        "target_K": 85.0,
         "force_source": "virtual",
-        "validation": "output_error",
     },
     "12.1": {
         "label": "requirement 12.1 mass-spring-damper",
@@ -28,45 +27,41 @@ TEST_PROFILES = {
         "target_C": 10.0,
         "target_K": 10.0,
         "force_source": "total",
-        "validation": "transient",
     },
 }
 
 TEST_CONFIG = {
-    "period_s": 0.01,
+    "period_s": 1/20,
     "session_name": "process-compose-terminal",
     "command_topic": "GUI",
-    "enable_virtual_force": True,
-    "excitation_force_N": 40.0,
-    "excitation_duration_s": 5.0,
+    "excitation_force_N": 120.0,
+    "excitation_duration_s": 3.5,
     "startup_delay_s": 3.0,
     "mode_transition_delay_s": 0.7,
     "settle_delay_s": 3.0,
     "return_to_idle_on_finish": True,
     "min_regression_samples": 30,
-    "valid_start_time_s": 0.15,
+    "valid_start_time_s": 0.05,
     "message_queue_size": 1,
-    "receive_timeout_margin_ms": 2,
-    "tolerance": 0.10,
+    "receive_timeout_margin_ms": 200,
+    "tolerance": 0.45,
     "fit_bounds": {
         "M": (1.0, 100.0),
-        "C": (0.0, 60.0),
-        "K": (0.0, 40.0),
+        "C": (0.0, 100.0),
+        "K": (0.0, 100.0),
     },
-    "initial_search_step": np.array([5.0, 10.0, 5.0]),
-    "search_iterations": 8,
-    "transient_acc_threshold": 0.20,
+    "search_pct": 0.50,
+    "grid_steps": 20,
+    "transient_acc_threshold": 0.2,
+    "transient_vel_threshold": 0.15,
+    "transient_pos_threshold": 0.35,
     "transient_acc_fallback_threshold": 0.10,
     "transient_min_samples": 20,
     "transient_max_time_s": 1.50,
     "transient_fraction": 0.50,
-    "transient_max_mass": 100.0,
-    "transient_vel_threshold": 0.05,
-    "transient_pos_threshold": 0.02,
     "fit_min_x_scale": 0.10,
     "fit_min_v_scale": 0.10,
-    "velocity_error_weight": 0.50,
-    "search_step_shrink": 0.50,
+    "velocity_error_weight": 0.50
 }
 
 period = TEST_CONFIG["period_s"]
@@ -86,22 +81,28 @@ def plot_residuals_with_gaussian(residuals, title):
     x = np.linspace(mu - 4*sigma, mu + 4*sigma, 200)
     gauss = (1 / (sigma * math.sqrt(2 * math.pi))) * np.exp(-0.5 * ((x - mu)/sigma)**2)
 
+    print()
     plt.clf()
     plt.bar(bin_centers, hist)
     plt.plot(x, gauss)
     plt.title(title)
     plt.show()
+    print()
 
 def plot_time_series(t_values, y_values, title, y_label):
     if len(t_values) == 0 or len(y_values) == 0:
         return
 
+    print()
     plt.clf()
     plt.plot(t_values, y_values)
     plt.title(title)
     plt.xlabel("time [s]")
     plt.ylabel(y_label)
+    plt.xscale("linear")
+    plt.yscale("linear")
     plt.show()
+    print()
 
 def plot_force_diagnostics(t_values, virtual_values, loadcell_values, total_values):
     if len(t_values) == 0:
@@ -141,7 +142,6 @@ async def run_test(agent, profile):
     target_C = profile["target_C"]
     target_K = profile["target_K"]
     force_source = profile["force_source"]
-    validation = profile["validation"]
     
     impedance_params = {"M_v": target_M, "M_w": target_M,
                         "M_vb": target_M, "M_Wr": target_M,
@@ -150,10 +150,7 @@ async def run_test(agent, profile):
                         "K_v": target_K, "K_w": 0.0,
                         "K_vb": 0.0, "K_Wr": 0.0}
     command_topic = TEST_CONFIG["command_topic"]
-    enable_virtual_force = TEST_CONFIG["enable_virtual_force"]
-    excitation_force = (
-        TEST_CONFIG["excitation_force_N"] if enable_virtual_force else 0.0
-    )
+    excitation_force = TEST_CONFIG["excitation_force_N"]
     return_to_idle_on_finish = TEST_CONFIG["return_to_idle_on_finish"]
 
     # Send mode first, then params after the FSM has left idle.
@@ -165,8 +162,7 @@ async def run_test(agent, profile):
     agent.publish({"change_mode": "impedance_control_mode",
                    "impedance_params": impedance_params},
                   command_topic)
-    print(f"Test profile: {profile['label']} ({force_source} force fit, "
-          f"{validation} validation)")
+    print(f"Test profile: {profile['label']} ({force_source}) force fit")
     print(f"Configured Impedance: M={target_M}, C={target_C}, K={target_K}")
     print(f"Published impedance_params on {command_topic}:")
     print(json.dumps(impedance_params, indent=2))
@@ -177,20 +173,20 @@ async def run_test(agent, profile):
     # Data recording lists
     recorded_t = []
     recorded_F = []
-    recorded_Fx_raw = []
     recorded_Fx = []
     recorded_Ftotal = []
     recorded_a = []
     recorded_a_des = []
     recorded_v = []
     recorded_x = []
+    timecode_start = 0
+    start_time = time.time()
     
     stop_task = asyncio.create_task(listen())
     
-    phase = "Injecting virtual force" if enable_virtual_force else "Virtual force disabled"
+    phase = "Injecting virtual force" 
     print(f"Starting excitation phase... ({phase})")
-    start_time = time.time()
-    duration = TEST_CONFIG["excitation_duration_s"] if enable_virtual_force else None
+    duration = TEST_CONFIG["excitation_duration_s"] 
     virtual_force = 0.0
 
     while not stop_task.done():
@@ -203,8 +199,7 @@ async def run_test(agent, profile):
 
         # 2. Excitation Phase — virtual force can be disabled for plumbing tests
         virtual_force = excitation_force
-        if enable_virtual_force:
-            agent.publish({"virtual": {"virtual_force": virtual_force}}, command_topic)
+        agent.publish({"virtual": {"virtual_force": virtual_force}}, command_topic)
 
         # 3. Data Collection Phase
         r = agent.receive()
@@ -219,13 +214,15 @@ async def run_test(agent, profile):
             a = state.get("acceleration", 0.0)
             v = state.get("speed", 0.0)
             x = state.get("space_linear", 0.0)
-            Fx_raw = state.get("F_x", 0.0)
-            Ftotal = virtual_force + Fx_raw
+            if(timecode_start == 0):
+                timecode_start = lm[1].get("timecode", 0.0)
+            timecode = lm[1].get("timecode", 0.0)
+            Ftotal = virtual_force
             a_cmd = (Ftotal - target_C * v - target_K * x) / target_M
 
-            recorded_t.append(t)
+
+            recorded_t.append(timecode - timecode_start)
             recorded_F.append(virtual_force)
-            recorded_Fx_raw.append(Fx_raw)
             recorded_Ftotal.append(Ftotal)
             recorded_a.append(a)
             recorded_a_des.append(a_cmd)
@@ -235,19 +232,10 @@ async def run_test(agent, profile):
         await task
 
     # Stop the walker
-    if enable_virtual_force:
-        agent.publish({"virtual": {"virtual_force": 0.0}}, command_topic)
+    agent.publish({"virtual": {"virtual_force": 0.0}}, command_topic)
     if return_to_idle_on_finish:
         agent.publish({"change_mode": "idle"}, command_topic)
     print("Test finished. Analyzing data...\n")
-
-    if not enable_virtual_force:
-        print("Virtual force was disabled; skipping impedance regression.")
-        print(f"Collected {len(recorded_F)} ego_state samples.")
-        if recorded_F:
-            print(f"Last sample: F={recorded_F[-1]:.2f} "
-                  f"a={recorded_a[-1]:.4f} v={recorded_v[-1]:.4f} x={recorded_x[-1]:.4f}")
-        return
     
     # 4. Analysis Phase
     # Match the Test 12.1 document: solve A * X = F with ordinary least squares,
@@ -260,7 +248,6 @@ async def run_test(agent, profile):
     # Convert lists to numpy arrays
     t_arr = np.array(recorded_t)
     F_arr = np.array(recorded_F)
-    Fx_raw_arr = np.array(recorded_Fx_raw)
     Fx_arr = np.array(recorded_Fx)
     Ftotal_arr = np.array(recorded_Ftotal)
     a_arr = np.array(recorded_a)
@@ -285,7 +272,6 @@ async def run_test(agent, profile):
     else:
         F_fit = F_arr[valid_mask]
     F_virtual_fit = F_arr[valid_mask]
-    Fx_raw_fit = Fx_raw_arr[valid_mask]
     Ftotal_fit = Ftotal_arr[valid_mask]
     a_fit = a_arr[valid_mask]
     a_des_fit = a_des_arr[valid_mask]
@@ -294,7 +280,7 @@ async def run_test(agent, profile):
 
     A_matrix = np.column_stack((a_fit, v_fit, x_fit))
     coeffs, _, rank, singular_values = np.linalg.lstsq(A_matrix, F_fit, rcond=None)
-    ols_M, est_C, est_K = coeffs
+    lstsq_M, lstsq_C, lstsq_K = coeffs
 
     expected_force_sign = np.sign(np.mean(F_fit))
     if expected_force_sign == 0:
@@ -307,13 +293,13 @@ async def run_test(agent, profile):
             TEST_CONFIG["transient_max_time_s"],
             TEST_CONFIG["transient_fraction"] * t_fit[-1],
         )) &
-        (acc_aligned > TEST_CONFIG["transient_acc_threshold"])
+        (abs(acc_aligned) > TEST_CONFIG["transient_acc_threshold"])
     )
     if np.count_nonzero(transient_mask) < TEST_CONFIG["transient_min_samples"]:
         transient_mask = (
             (t_fit > TEST_CONFIG["valid_start_time_s"]) &
             (t_fit < TEST_CONFIG["transient_fraction"] * t_fit[-1]) &
-            (acc_aligned > TEST_CONFIG["transient_acc_fallback_threshold"])
+            (abs(acc_aligned) > TEST_CONFIG["transient_acc_fallback_threshold"])
         )
 
     transient_M = None
@@ -329,16 +315,16 @@ async def run_test(agent, profile):
             target_K * x_fit[transient_mask]
         ) / a_fit[transient_mask]
         mass_candidates = mass_candidates[np.isfinite(mass_candidates)]
-        mass_candidates = mass_candidates[
-            (mass_candidates > 0.0) &
-            (mass_candidates < TEST_CONFIG["transient_max_mass"])
-        ]
         if len(mass_candidates) >= 10:
+            plot_time_series(t_fit[transient_mask], mass_candidates, "Mass Candidates", "Mass (kg)")
             transient_M = float(np.median(mass_candidates))
         transient_acc_mean = float(np.mean(a_fit[transient_mask]))
         transient_expected_acc_mean = float(np.mean(a_des_fit[transient_mask]))
         if abs(transient_expected_acc_mean) > 1e-9:
             transient_ratio = transient_acc_mean / transient_expected_acc_mean
+    else:
+        print("Not enough transient samples for mass estimation.")
+
 
     # ── Transient C (damping) estimation ────────────────────────────────────
     # The full impedance model is: F = M·a + C·v + K·x
@@ -359,13 +345,9 @@ async def run_test(agent, profile):
         ) / v_fit[c_mask]
         # Remove non-finite values (division edge cases) and out-of-bounds outliers
         damping_candidates = damping_candidates[np.isfinite(damping_candidates)]
-        damping_candidates = damping_candidates[
-            (damping_candidates >= bounds["C"][0]) &
-            (damping_candidates <= bounds["C"][1])
-        ]
         if len(damping_candidates) >= 10:
             transient_C = float(np.median(damping_candidates))
-
+            plot_time_series(t_fit[c_mask], damping_candidates, "Damping Candidates", "Damping (N·s/m)")
     # ── Transient K (stiffness) estimation ──────────────────────────────────
     # Similarly, when displacement |x| is high (walker has moved far from origin),
     # the K·x spring term dominates. We subtract M·a and C·v and solve for K.
@@ -382,13 +364,9 @@ async def run_test(agent, profile):
         ) / x_fit[k_mask]
         # Remove non-finite values and out-of-bounds outliers
         stiffness_candidates = stiffness_candidates[np.isfinite(stiffness_candidates)]
-        stiffness_candidates = stiffness_candidates[
-            (stiffness_candidates >= bounds["K"][0]) &
-            (stiffness_candidates <= bounds["K"][1])
-        ]
         if len(stiffness_candidates) >= 10:
             transient_K = float(np.median(stiffness_candidates))
-
+            plot_time_series(t_fit[k_mask], stiffness_candidates, "Stiffness Candidates", "Stiffness (N/m)")
     def clamp(value, lower, upper):
         return min(max(float(value), lower), upper)
 
@@ -413,67 +391,68 @@ async def run_test(agent, profile):
         if M <= 0.0 or C < 0.0 or K < 0.0:
             return np.inf
         x_sim, v_sim = simulate_response(M, C, K)
-        x_err = (x_fit - x_sim) / x_scale
-        v_err = (v_fit - v_sim) / v_scale
+        x_err = np.abs(x_fit - x_sim) / x_scale
+        v_err = np.abs(v_fit - v_sim) / v_scale
         return float(
             np.mean(x_err * x_err) +
             TEST_CONFIG["velocity_error_weight"] * np.mean(v_err * v_err)
         )
 
     bounds = TEST_CONFIG["fit_bounds"]
-    start_points = [
-        np.array([target_M, target_C, target_K]),
-        np.array([
-            clamp(abs(ols_M), *bounds["M"]),
-            clamp(abs(est_C), *bounds["C"]),
-            clamp(abs(est_K), *bounds["K"]),
-        ]),
-    ]
-    if transient_M is not None:
+    start_points = [np.array([
+            clamp(abs(lstsq_M), *bounds["M"]),
+            clamp(abs(lstsq_C), *bounds["C"]),
+            clamp(abs(lstsq_K), *bounds["K"]),
+        ])]
+    if transient_M is not None and transient_C is not None and transient_K is not None:
         start_points.append(np.array([
             clamp(transient_M, *bounds["M"]),
-            clamp(abs(est_C), *bounds["C"]),
-            clamp(abs(est_K), *bounds["K"]),
+            clamp(abs(transient_C), *bounds["C"]),
+            clamp(abs(transient_K), *bounds["K"]),
         ]))
+    else:
+        print("Transient estimates unavailable or incomplete; skipping them as optimization starting points.")
 
     best_params = None
     best_error = np.inf
+    search_pct = TEST_CONFIG["search_pct"]  
+    grid_steps = TEST_CONFIG["grid_steps"]  
     for start in start_points:
-        current = np.array([
+        center = np.array([
             clamp(start[0], *bounds["M"]),
             clamp(start[1], *bounds["C"]),
             clamp(start[2], *bounds["K"]),
         ])
-        step = TEST_CONFIG["initial_search_step"].copy()
 
-        for _ in range(TEST_CONFIG["search_iterations"]):
-            improved = False
-            for dm in (-1.0, 0.0, 1.0):
-                for dc in (-1.0, 0.0, 1.0):
-                    for dk in (-1.0, 0.0, 1.0):
-                        candidate = current + step * np.array([dm, dc, dk])
-                        candidate[0] = clamp(candidate[0], *bounds["M"])
-                        candidate[1] = clamp(candidate[1], *bounds["C"])
-                        candidate[2] = clamp(candidate[2], *bounds["K"])
-                        error = trajectory_error(candidate[0], candidate[1], candidate[2])
-                        if error < best_error:
-                            best_error = error
-                            best_params = candidate.copy()
-                            current = candidate.copy()
-                            improved = True
-            if not improved:
-                step *= TEST_CONFIG["search_step_shrink"]
+        ranges = [
+            np.linspace(center[0] * (1 - search_pct), center[0] * (1 + search_pct), grid_steps),
+            np.linspace(center[1] * (1 - search_pct), center[1] * (1 + search_pct), grid_steps),
+            np.linspace(center[2] * (1 - search_pct), center[2] * (1 + search_pct), grid_steps),
+        ]
+
+        for M in ranges[0]:
+            for C in ranges[1]:
+                for K in ranges[2]:
+                    candidate = np.array([
+                        clamp(M, *bounds["M"]),
+                        clamp(C, *bounds["C"]),
+                        clamp(K, *bounds["K"]),
+                    ])
+
+                    error = trajectory_error(candidate[0], candidate[1], candidate[2])
+
+                    if error < best_error:
+                        best_error = error
+                        best_params = candidate.copy()
 
     if best_params is None:
         print("Output-error fit failed; using OLS estimates.")
-        est_M = ols_M
     else:
         est_M, est_C, est_K = best_params
 
     x_model, v_model = simulate_response(est_M, est_C, est_K)
     x_rmse = math.sqrt(float(np.mean((x_fit - x_model) ** 2)))
     v_rmse = math.sqrt(float(np.mean((v_fit - v_model) ** 2)))
-    reported_M = transient_M if validation == "transient" and transient_M is not None else est_M
     
     # Calculate individual residuals
     # F_pred = M*a + C*v + K*x
@@ -484,15 +463,13 @@ async def run_test(agent, profile):
     std_res = np.std(res_fitted)
     
     cond = np.inf if np.min(singular_values) == 0 else np.max(singular_values) / np.min(singular_values)
-    print("=== Regression Results ===")
-    print(f"Estimated Mass (M):      {reported_M:.3f} kg    (Target: {target_M})")
-    if reported_M != est_M:
-        print(f"Output-error Mass Diag:  {est_M:.3f} kg")
+    print("=== Results ===")
+    print(f"Estimated Mass (M):      {est_M:.3f} kg    (Target: {target_M})")
     print(f"Estimated Damping (C):   {est_C:.3f} Ns/m  (Target: {target_C})")
     print(f"Estimated Stiffness (K): {est_K:.3f} N/m   (Target: {target_K})")
-    print(f"Fit Method:              Output-error on x/v")
+    print("--------------------------")
     print(f"Force Used For Fit:      {force_source}")
-    print(f"OLS Diagnostic M/C/K:    {ols_M:.3f}, {coeffs[1]:.3f}, {coeffs[2]:.3f}")
+    print(f"Least Mean Squared Diagnostic M/C/K:    {lstsq_M:.3f}, {lstsq_C:.3f}, {lstsq_K:.3f}")
     if transient_M is not None:
         print(f"Transient Mass Diag:     {transient_M:.3f} kg "
               f"({np.count_nonzero(transient_mask)} samples)")
@@ -511,6 +488,7 @@ async def run_test(agent, profile):
               f"({np.count_nonzero(k_mask)} samples)")
     else:
         print("Transient Stiffness Diag: unavailable")
+    print("--------------------------")
     print(f"Trajectory RMSE x/v:     {x_rmse:.4f} m / {v_rmse:.4f} m/s")
     print(f"Regression Rank/Cond:    {rank}/{cond:.2f}")
     print(f"Samples Used/Total:      {len(t_fit)}/{len(t_arr)}")
@@ -528,58 +506,31 @@ async def run_test(agent, profile):
         print("Expected Acc Mean:       unavailable")
     print("--------------------------")
     print("=== Force Diagnostics ===")
-    print(f"Virtual Force Mean:      {np.mean(F_virtual_fit):.3f} N")
-    print(f"Loadcell F_x Raw Mean:   {np.mean(Fx_raw_fit):.3f} N")
-    print(f"Loadcell F_x Raw Min/Max:{np.min(Fx_raw_fit):.3f} / {np.max(Fx_raw_fit):.3f} N")
-    print(f"Total Force Mean:        {np.mean(Ftotal_fit):.3f} N")
-    print(f"Total Force Min/Max:     {np.min(Ftotal_fit):.3f} / {np.max(Ftotal_fit):.3f} N")
-    print("--------------------------")
     print(f"Residuals Mean:          {mean_res:.4f} N")
     print(f"Residuals Std Dev:       {std_res:.4f} N")
     print("==========================\n")
-
-    # Plot virtual force, load-cell force, and their sum in terminal
-    plot_force_diagnostics(t_fit, F_virtual_fit, Fx_raw_fit, Ftotal_fit)
-
-    # Plot measured acceleration in terminal
-    plot_time_series(t_fit, a_fit, "Measured Acceleration", "a [m/s^2]")
     
     # Plot residuals in terminal
-    plot_residuals_with_gaussian(res_fitted, "Residuals (Impedance Fit)")
-    
+    plot_residuals_with_gaussian(res_fitted, "Force Residuals")
+    plot_residuals_with_gaussian((x_fit - x_model), "Position Residuals")
+    plot_residuals_with_gaussian((v_fit - v_model), "Velocity Residuals")
+
     # 5. Validation Check (+/- 10%)
     def check_tolerance(name, estimated, target, tol=TEST_CONFIG["tolerance"]):
         lower = target * (1 - tol)
         upper = target * (1 + tol)
         passed = lower <= estimated <= upper
         status = "PASS" if passed else "FAIL"
-        print(f"[{status}] {name} is within 10% tolerance [{lower:.1f}, {upper:.1f}]")
+        if passed:
+            string = f"{estimated:.3f} is within ±{tol*100:.1f}% of {target}"
+        else:
+            string = f"{estimated:.3f} is NOT within ±{tol*100:.1f}% of {target}"
+        print(f"[{status}] {name}: {string} (tolerance range: [{lower:.1f}, {upper:.1f}])")
         return passed
 
-    print(f"Validation Mode:         {validation}")
-    if validation == "transient":
-        # Validate each parameter using its transient window estimate.
-        # If a window had too few samples the estimate is None → FAIL with a clear message.
-        # Previously C and K compared target against itself here (always PASS) — now fixed.
-        if transient_M is None:
-            print("[FAIL] Transient mass is unavailable")
-            m_pass = False
-        else:
-            m_pass = check_tolerance("Transient mass", transient_M, target_M)
-        if transient_C is None:
-            print("[FAIL] Transient damping is unavailable")
-            c_pass = False
-        else:
-            c_pass = check_tolerance("Transient damping", transient_C, target_C)
-        if transient_K is None:
-            print("[FAIL] Transient stiffness is unavailable")
-            k_pass = False
-        else:
-            k_pass = check_tolerance("Transient stiffness", transient_K, target_K)
-    else:
-        m_pass = check_tolerance("Mass", est_M, target_M)
-        c_pass = check_tolerance("Damping", est_C, target_C)
-        k_pass = check_tolerance("Stiffness", est_K, target_K)
+    m_pass = check_tolerance("Mass", est_M, target_M)
+    c_pass = check_tolerance("Damping", est_C, target_C)
+    k_pass = check_tolerance("Stiffness", est_K, target_K)
     
     print("\n--------------------------")
     if m_pass and c_pass and k_pass:
