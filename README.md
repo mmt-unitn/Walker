@@ -295,6 +295,432 @@ This test verifies the system's ability to detect and properly handle a loss of 
 - Python virtual environment with `pyserial` installed.
 - Appropriate permissions to access serial devices.
 
+## `test_pose_check.py`
+
+This test verifies the repeatability and drift of the Walker ego-state pose estimation.
+
+### Purpose
+
+- Starts the Walker software stack using the test-specific configuration.
+- Runs the stack without the FSM, using `process-compose-without-fsm.yml`.
+- Waits for manual user confirmation before each pose evaluation.
+- Reads pose messages from the `ego_state` topic.
+- Records the estimated planar position and orientation over multiple evaluations.
+- Checks whether the measured pose uncertainty remains within the configured limits.
+- After a fixed waiting time, evaluates pose drift.
+
+### Measured parameters
+
+- Position magnitude:
+
+```text
+sqrt(x^2 + y^2)
+```
+
+- Orientation angle:
+
+```text
+theta
+```
+
+- Position uncertainty, computed as two standard deviations over repeated measurements.
+- Orientation uncertainty, computed as two standard deviations over repeated measurements.
+- Position drift after the configured waiting time.
+- Orientation drift after the configured waiting time.
+
+### Pass criteria
+
+For **Test 1.1**:
+
+- The position uncertainty must be below `max_2std_position`.
+- The position drift must remain below `max_dist_drift`.
+
+For **Test 1.2**:
+
+- The orientation uncertainty must be below `max_2std_theta`.
+- The orientation drift must remain below `max_theta_drift`.
+
+### Configuration
+
+The main thresholds are defined in `TEST_CONFIG`:
+
+```text
+n_evaluations = 3
+max_2std_position = 0.05 m
+max_2std_theta = 5 deg
+max_dist_drift = 0.5 m
+max_theta_drift = 15 deg
+delay_drift_s = 30 s
+```
+
+### Requirements
+
+- MADS broker running and reachable.
+- Walker software stack available.
+- `ego_state` component publishing pose estimates.
+- Test-specific `.ini` configuration file available in `config_files`.
+- Python virtual environment with the required dependencies installed.
+- `numpy` installed in the virtual environment.
+- `tmux` and `process-compose` session utilities available.
+
+## `test_speed_check.py`
+
+This test verifies the speed estimation repeatability and the enforcement of the Walker speed limit.
+
+### Purpose
+
+- Starts the Walker software stack using the test-specific configuration.
+- Runs the stack without the FSM, using `process-compose-without-fsm.yml`.
+- Commands wheel speeds higher than the configured speed limit.
+- Alternates the commanded direction at each evaluation.
+- Reads the measured speed from the `ego_state` topic.
+- Verifies that the speed limiter prevents the Walker from exceeding the configured maximum speed.
+- Evaluates the repeatability of the measured speed by computing its uncertainty over repeated samples.
+
+### Measured parameters
+
+- Linear speed:
+
+```text
+ego_state.speed
+```
+
+- Mean measured speed during each evaluation interval.
+- Speed uncertainty, computed as two standard deviations of the recorded speed samples.
+
+### Pass criteria
+
+For **Test 3**:
+
+- The speed measurement uncertainty must remain below `max_2std`.
+
+For **Test 8.3**:
+
+- The absolute measured speed must remain below `speed_limit`, even when a higher speed is commanded.
+
+### Test procedure
+
+For each evaluation:
+
+1. A speed command greater than the configured speed limit is sent.
+2. The Walker is allowed to move for the evaluation period.
+3. Speed measurements are collected from the `ego_state` topic.
+4. The average speed and uncertainty are computed.
+5. The speed limit and uncertainty requirements are verified.
+6. The Walker is stopped before the next evaluation.
+
+The procedure is repeated for the configured number of evaluations while alternating the direction of motion.
+
+### Configuration
+
+The main thresholds are defined in `TEST_CONFIG`:
+
+```text
+n_evaluations = 10
+speed_set = 1.0 m/s
+speed_limit = 0.25 m/s
+max_2std = 1.0 m/s
+time_evaluation = 1.0 s
+time_between_evaluations = 3.0 s
+wheel_radius = 0.084 m
+```
+
+### Requirements
+
+- MADS broker running and reachable.
+- Walker software stack available.
+- `ego_state` component publishing speed estimates.
+- Driver and motion-control components operational.
+- Test-specific `.ini` configuration file available in `config_files`.
+- Python virtual environment with the required dependencies installed.
+- `numpy` installed in the virtual environment.
+- `tmux` and `process-compose` session utilities available.
+- Sufficient free space for safe Walker motion during the test.
+
+## `test_path_following_clothoid.py`
+
+This test verifies the Walker path-following performance on a clothoid trajectory and evaluates the effect of torsional stiffness on path-tracking accuracy.
+
+### Purpose
+
+- Starts the Walker software stack using the test-specific configuration.
+- Generates a clothoid (Euler spiral) path from `(0,0)` to `(4,1)` with zero heading at both ends.
+- Commands the FSM to enter `path_following_mode` through the `GUI` topic.
+- Executes two path-following runs:
+  - Baseline torsional stiffness (`K_w = 10 Nm/rad`)
+  - High torsional stiffness (`K_w = 100 Nm/rad`)
+- Records walker pose feedback from the `FSM/path_planning` topic.
+- Computes the minimum-distance offset between the measured trajectory and the commanded clothoid path.
+- Verifies that the walker actually traverses the path and reaches the target region.
+- Compares tracking performance between the two stiffness configurations.
+
+### Measured parameters
+
+- Walker position:
+
+```text
+walker_pose = [x, y, theta]
+```
+
+- Lateral offset from the commanded clothoid path.
+- Maximum path-tracking error.
+- Mean path-tracking error.
+- Final distance to the goal position.
+- Progress ratio along the path arc length.
+- Completion status of the path-following task.
+
+### Acceptance criteria
+
+The test passes only if all of the following conditions are satisfied:
+
+1. The maximum offset from the commanded path remains below:
+
+```text
+MAX_ALLOWED_OFFSET_M = 1.0 m
+```
+
+2. The walker successfully follows the path:
+
+   - Final distance to goal ≤ 0.5 m
+   - Progress ratio ≥ 0.8
+
+3. The path-following task completes normally:
+
+   - FSM mode transition detected, or
+   - Path-following activity becomes inactive after successful execution.
+
+4. Increasing torsional stiffness improves tracking performance by at least:
+
+```text
+HIGH_STIFFNESS_MARGIN_M = 0.05 m
+```
+
+where:
+
+```text
+improvement = max_offset_baseline - max_offset_high_stiffness
+```
+
+### Test procedure
+
+#### Baseline run
+
+- Set FSM to idle.
+- Send a clothoid path-following command.
+- Apply impedance-control parameters with:
+
+```text
+K_w = 10 Nm/rad
+```
+
+- Record the resulting trajectory.
+
+#### High-stiffness run
+
+- Repeat the same procedure with:
+
+```text
+K_w = 100 Nm/rad
+```
+
+- Record the resulting trajectory.
+
+#### Comparison
+
+- Compute trajectory offsets for both runs.
+- Compare maximum path-tracking errors.
+- Verify that the higher stiffness configuration improves tracking accuracy.
+
+### Impedance parameters
+
+The following impedance parameters are used:
+
+```text
+M_v = 5.0
+M_w = 2.0
+K_v = 0.0
+C_v = 40.0
+C_w = 35.0
+```
+
+The torsional stiffness parameter `K_w` is varied between the two runs.
+
+### Virtual command
+
+The test applies a constant virtual force:
+
+```text
+virtual_force = 10 N
+virtual_torque = 0 Nm
+```
+
+### Configuration
+
+Important test parameters:
+
+```text
+samples = 300
+timeout = 60 s
+
+baseline K_w = 10 Nm/rad
+high stiffness K_w = 100 Nm/rad
+
+max allowed offset = 1.0 m
+minimum final distance = 0.5 m
+minimum progress ratio = 0.8
+
+required improvement = 0.05 m
+```
+
+### Generated outputs
+
+The script reports:
+
+- Maximum trajectory offset.
+- Mean trajectory offset.
+- Final distance from the goal.
+- Final heading.
+- Path coverage ratio.
+- Completion status.
+- Tracking improvement obtained with increased torsional stiffness.
+
+If the optional `plotext` package is installed, the script also displays:
+
+- Commanded clothoid path and measured trajectories.
+- Offset-versus-sample plots for both stiffness configurations.
+
+### Requirements
+
+- MADS broker running and reachable.
+- Walker software stack available.
+- FSM capable of entering `path_following_mode`.
+- `FSM/path_planning` feedback topic available.
+- `FSM/mode` feedback topic available.
+- `ego_state` feedback available.
+- Driver communication operational.
+- Test-specific `.ini` configuration file available in `config_files`.
+- Python virtual environment with the required dependencies installed.
+- Optional: `plotext` for terminal plots.
+- Sufficient free space for safe path-following execution.
+
+
+## `test_impedance_validation.py`
+
+This test verifies that the Walker behaves as a configured mass-spring-damper system when operating in impedance-control mode.
+
+### Purpose
+
+- Starts the Walker software stack using the test-specific configuration.
+- Switches the FSM to `impedance_control_mode`.
+- Configures a target impedance model defined by mass (`M`), damping (`C`), and stiffness (`K`).
+- Applies a constant virtual force to excite the system.
+- Records position, velocity, and acceleration measurements from the `ego_state` topic.
+- Estimates the effective dynamic parameters of the Walker through regression and model fitting.
+- Verifies that the measured behavior matches the configured impedance model within the specified tolerance.
+
+### Supported profiles
+
+#### Legacy profile
+
+- M = 50 kg
+- C = 65 Ns/m
+- K = 85 N/m
+
+#### Requirement 12.1 profile
+
+- M = 20 kg
+- C = 10 Ns/m
+- K = 10 N/m
+
+### Test procedure
+
+1. Configure the Walker impedance parameters.
+2. Switch the FSM to `impedance_control_mode`.
+3. Allow the system to settle.
+4. Apply a virtual force of 120 N.
+5. Record position, velocity, and acceleration.
+6. Build the dynamic model:
+
+   F = M·a + C·v + K·x
+
+7. Estimate the parameters using:
+   - Ordinary Least Squares regression
+   - Transient-response analysis
+   - Output-error trajectory fitting
+
+8. Compare the estimated parameters with the configured values.
+
+### Measured parameters
+
+From `ego_state`:
+
+- acceleration
+- speed
+- space_linear
+
+Estimated:
+
+- Mass (M)
+- Damping (C)
+- Stiffness (K)
+
+### Acceptance criteria
+
+Each estimated parameter must remain within ±45% of the configured target value.
+
+The test passes only if:
+
+- Mass estimate passes.
+- Damping estimate passes.
+- Stiffness estimate passes.
+
+### Configuration
+
+Important settings:
+
+- period = 0.05 s (20 Hz)
+- excitation force = 120 N
+- excitation duration = 3.5 s
+- startup delay = 3 s
+- settle delay = 3 s
+- minimum regression samples = 30
+- tolerance = ±45%
+
+### Generated outputs
+
+The script reports:
+
+- Estimated Mass
+- Estimated Damping
+- Estimated Stiffness
+- Position RMSE
+- Velocity RMSE
+- Regression diagnostics
+- Residual statistics
+- Expected versus measured acceleration
+
+### Terminal plots
+
+If `plotext` is installed, the script displays:
+
+- Force residual histograms
+- Position residual histograms
+- Velocity residual histograms
+- Mass candidate distributions
+- Damping candidate distributions
+- Stiffness candidate distributions
+
+### Requirements
+
+- MADS broker running and reachable.
+- Walker software stack available.
+- FSM capable of entering `impedance_control_mode`.
+- `ego_state` topic available.
+- Test-specific `.ini` configuration file available.
+- Python virtual environment with required dependencies installed.
+- `numpy` installed.
+- Optional: `plotext` for terminal visualization.
+
 ## Contact
 
 MADS Consortium  

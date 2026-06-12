@@ -91,14 +91,14 @@ include(FetchContent)
 FetchContent_Declare(
   load_cells_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
-  GIT_TAG 04ab682
+  GIT_TAG ee4e1fd
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
-  GIT_TAG aaef7d7
+  GIT_TAG 8e74ce7
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
@@ -119,14 +119,14 @@ FetchContent_Declare(
 FetchContent_Declare(
   forces_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
-  GIT_TAG 086962c
+  GIT_TAG 32f386e
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   ego_state_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
-  GIT_TAG 13bfcf9
+  GIT_TAG 4c4c865
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
   GIT_SUBMODULES_RECURSE TRUE
 )
@@ -134,7 +134,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   FSM
   GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
-  GIT_TAG bc0d9f3
+  GIT_TAG 37d9ec5
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
@@ -191,7 +191,6 @@ FetchContent_MakeAvailable(
   FSM
   watchdog_plugin
   plugin_tester
-
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")

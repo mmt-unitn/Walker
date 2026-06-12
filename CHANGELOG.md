@@ -16,7 +16,10 @@ e questo progetto segue il versionamento semantico.
 ## [v1.4.0] - 07/05/2026 
 ### Added
  - Python script test files for test speed limitation and speed computing
+ - Python script test files for path following
  - Python script test files for driver communication
+ - Python script test files for pose accuracy
+ - Python script test files for applying impedance parameter behaviour 
  - Launch files 
  - Load Cell plugin scaling from ini for each load cell
 

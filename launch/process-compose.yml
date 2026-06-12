@@ -5,49 +5,49 @@ processes:
     command: bash -c "cd ../config_files && mads broker -d"
 
   loadcells:
-    command: bash -c "sleep 1 && mads source loadcells -r"
+    command: bash -c "sleep 1 && mads source loadcells"
     depends_on:
       broker:
         condition: process_started
 
   driver:
-    command: bash -c "sleep 1 && mads filter driver -r"
+    command: bash -c "sleep 1 && mads filter driver"
     depends_on:
       broker:
         condition: process_started
 
   portenta:
-    command: bash -c "sleep 1 && mads sink portenta -r"
+    command: bash -c "sleep 1 && mads sink portenta"
     depends_on:
       broker:
         condition: process_started
 
   forces_calibration:
-    command: bash -c "sleep 1 && mads filter forces_calibration -r"
+    command: bash -c "sleep 1 && mads filter forces_calibration"
     depends_on:
       broker:
         condition: process_started
 
   imu:
-    command: bash -c "sleep 1 && mads source sense-hat -r"
+    command: bash -c "sleep 1 && mads source sense-hat"
     depends_on:
       broker:
         condition: process_started
 
   imu_calibration:
-    command: bash -c "sleep 1 && mads filter imu_calibration -r"
+    command: bash -c "sleep 1 && mads filter imu_calibration"
     depends_on:
       broker:
         condition: process_started
 
   ego_state:
-    command: bash -c "sleep 1 && mads filter ego_state -r"
+    command: bash -c "sleep 1 && mads filter ego_state"
     depends_on:
       broker:
         condition: process_started
 
   unhook_detector:
-    command: bash -c "sleep 1 && mads filter unhookdetector -r"
+    command: bash -c "sleep 1 && mads filter unhookdetector"
     depends_on:
       broker:
         condition: process_started
