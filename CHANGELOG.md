@@ -13,7 +13,12 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [v1.4.0] - 07/05/2026 
+## [v1.4.1] - 07/05/2026 
+### Fixed
+ - Driver bouncing of leds
+ - state machine
+
+## [v1.4.0] - 12/06/2026 
 ### Added
  - Python script test files for test speed limitation and speed computing
  - Python script test files for path following
@@ -30,7 +35,7 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [v1.3.0] - 07/05/2026 
+## [v1.3.0] - 28/05/2026 
 ### Added
 - Python script test files for check impedance control mode 
 - Python script test files for check path following mode
