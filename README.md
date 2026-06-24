@@ -45,6 +45,19 @@ sudo apt install build-essential cmake git clang libeigen3-dev
 
 Eigen3 is required at configure time. If it is missing, CMake stops with an explicit error and suggests installing `libeigen3-dev`.
 
+## Configure USB Power Delivery via Software
+Enable the maximum USB power output by editing:
+
+```bash
+/boot/firmware/config.txt
+```
+
+and adding:
+
+```bash
+usb_max_current_enable=1
+```
+
 ## External runtime dependency: MADS
 
 Walker depends on **MADS**. This README targets **MADS v2.0.4**, which is published as the latest release on the referenced GitHub release page.
