@@ -13,10 +13,18 @@ e questo progetto segue il versionamento semantico.
 
 ---
 
-## [v1.4.1] - 07/05/2026 
+## [v2.0.0] - 30/06/2026 
+### Added
+ - Echo on driver
+ - Current limit on driver
+ - Torque slope limit on driver
+### Changed
+ - State machine cleaner
+ - Driver current read just that regarding the torque applied on the wheel
 ### Fixed
+ - Driver parsing 
  - Driver bouncing of leds
- - state machine
+ - Time detection in FSM
 
 ## [v1.4.0] - 12/06/2026 
 ### Added

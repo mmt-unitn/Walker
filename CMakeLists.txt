@@ -91,42 +91,42 @@ include(FetchContent)
 FetchContent_Declare(
   load_cells_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
-  GIT_TAG ee4e1fd
+  GIT_TAG 0cf03b7
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
-  GIT_TAG 8e74ce7
+  GIT_TAG c8da4f0
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   portenta_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/portenta_plugin.git
-  GIT_TAG f9303b0
+  GIT_TAG 8dc2e67
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   imu_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/sense-hat_plugin.git
-  GIT_TAG 9f2a91e
+  GIT_TAG 33c3c43
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   forces_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
-  GIT_TAG 32f386e
+  GIT_TAG 6b59ed2
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   ego_state_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
-  GIT_TAG 4c4c865
+  GIT_TAG ff05f25
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
   GIT_SUBMODULES_RECURSE TRUE
 )
@@ -134,21 +134,21 @@ FetchContent_Declare(
 FetchContent_Declare(
   FSM
   GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
-  GIT_TAG 37d9ec5
+  GIT_TAG 9b3043f
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   unhook_detector_plugin
   GIT_REPOSITORY  https://github.com/mmt-unitn/UnhookDetector.git
-  GIT_TAG 90be9dc
+  GIT_TAG  cd01c40
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   watchdog_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/watchdog_plugin.git
-  GIT_TAG 1b852de
+  GIT_TAG 0246d4b
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
@@ -162,14 +162,14 @@ FetchContent_Declare(
 FetchContent_Declare(
   common_walker
   GIT_REPOSITORY https://github.com/mmt-unitn/common_walker.git
-  GIT_TAG HEAD
+  GIT_TAG bf6a546
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   imu_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/imu_calibration_plugin.git
-  GIT_TAG 22ea13c
+  GIT_TAG b3d73e8
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 

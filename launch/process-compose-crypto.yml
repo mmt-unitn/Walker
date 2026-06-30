@@ -1,0 +1,71 @@
+version: "0.5"
+
+processes:
+  broker:
+    command: bash -c "cd ../config_files && mads broker -d --crypto=broker --keys_dir=/home/miro/security"
+
+  loadcells:
+    command: bash -c "sleep 1 && mads source loadcells --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  driver:
+    command: bash -c "sleep 1 && mads filter driver --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  portenta:
+    command: bash -c "sleep 1 && mads sink portenta --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  forces_calibration:
+    command: bash -c "sleep 1 && mads filter forces_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  imu:
+    command: bash -c "sleep 1 && mads source sense-hat --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  imu_calibration:
+    command: bash -c "sleep 1 && mads filter imu_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  ego_state:
+    command: bash -c "sleep 1 && mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  unhook_detector:
+    command: bash -c "sleep 1 && mads filter unhookdetector --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  watchdog:
+    command: bash -c "sleep 1 && mads source watchdog --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
+
+  fsm:
+    command: bash -c "sleep 1 && mads-NovaWalk-FSM --crypto=true"
+    depends_on:
+      broker:
+        condition: process_started
+
+  feedback:
+    command: bash -c "sleep 1 && mads feedback --crypto --key_broker=broker --key_client=broker --keys_dir=/home/miro/security"
+    depends_on:
+      broker:
+        condition: process_started
