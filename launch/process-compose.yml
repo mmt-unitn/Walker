@@ -52,6 +52,12 @@ processes:
       broker:
         condition: process_started
 
+  watchdog:
+    command: bash -c "sleep 1 && mads source watchdog"
+    depends_on:
+      broker:
+        condition: process_started
+
   fsm:
     command: bash -c "sleep 1 && mads-NovaWalk-FSM --crypto=false"
     depends_on:
