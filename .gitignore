@@ -7,3 +7,4 @@ python/.venv
 python/.venv/
 Python/.venv/
 __pycache__/
+/visualization/.venv

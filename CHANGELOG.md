@@ -11,6 +11,10 @@ e questo progetto segue il versionamento semantico.
 ### Changed
 ### Fixed
 
+## [v2.1.0] - 02/07/2026 
+### Added
+ - Visualization with rerunner and mads director
+
 ---
 
 ## [v2.0.0] - 30/06/2026 
@@ -25,6 +29,8 @@ e questo progetto segue il versionamento semantico.
  - Driver parsing 
  - Driver bouncing of leds
  - Time detection in FSM
+
+---
 
 ## [v1.4.0] - 12/06/2026 
 ### Added
