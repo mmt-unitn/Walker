@@ -1,0 +1,87 @@
+# director example configuration
+# Notes:
+# - [director] is optional global settings.
+# - Each top-level section name is the process name (mandatory).
+# - All options are shown below with defaults and purpose.
+
+[director] # optional: global director settings
+terminal = "" # optional, default="": terminal executable for detached attach windows
+sample_rate = 2.0 # optional, default=2.0: process metrics sampling period in seconds (fractions allowed)
+
+[chat]
+command = "mads-chat --room=Novawalk"
+workdir = "mads_chat/"
+
+[ego_state_trajectory]
+command = "python3 ego_state_trajectory.py"
+workdir = "interfaces/"
+enabled = true
+scale = 1
+relaunch = false
+tty = "false"
+
+[calculate_torque]
+command = "python3 calculate_torque.py"
+workdir = "interfaces/"
+enabled = true
+scale = 1
+relaunch = false
+tty = "false"
+
+[rerunner_detectors]
+command = "mads sink rerunner.plugin -n rerunner_detectors -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+workdir = ""
+enabled = false
+scale = 1
+relaunch = false
+tty = "false"
+
+[rerunner_loadcells]
+command = "mads sink rerunner.plugin -n rerunner_loadcells -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+workdir = ""
+enabled = false
+scale = 1
+relaunch = false
+tty = "false"
+
+[rerunner_forces_calibrated]
+command = "mads sink rerunner.plugin -n rerunner_forces_calibrated -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+workdir = ""
+enabled = false
+scale = 1
+relaunch = false
+tty = "false"
+
+[rerunner_calibrated_imu]
+command = "mads sink rerunner.plugin -n rerunner_calibrated_imu -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+workdir = ""
+enabled = false
+scale = 1
+relaunch = false
+tty = "false"
+
+[rerunner_imu]
+command = "mads sink rerunner.plugin -n rerunner_imu -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+enabled = false
+
+[rerunner_driver]
+command = "mads sink rerunner.plugin -n rerunner_driver -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+after = "calculate_torque"
+workdir = ""
+enabled = false
+scale = 1
+relaunch = false
+tty = "false"
+
+[rerunner_ego_state]
+command = "mads sink rerunner.plugin -n rerunner_ego_state -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+after = "ego_state_trajectory"
+workdir = ""
+enabled = false
+scale = 1
+relaunch = false
+tty = "false"
+
+[rerunner_driver_response]
+command = "mads sink rerunner.plugin -n driver_response -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+enabled = false
