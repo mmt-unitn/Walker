@@ -4,6 +4,12 @@
 #
 # Automates the system configuration described in the Walker README:
 #
+#   "Requirements" / "Phidget22" (apt dependencies)
+#     - installs the apt build dependencies (build-essential cmake git clang
+#       libeigen3-dev) and, if needed, registers the Phidgets apt repository
+#       and installs libphidget22. MADS is NOT installed by this script - it
+#       is a separate GitHub release, see the README.
+#
 #   "Configure USB Power Delivery via Software"
 #     - sets usb_max_current_enable=1 in the Raspberry Pi firmware config
 #       (/boot/firmware/config.txt, or /boot/config.txt on older images);
@@ -28,7 +34,8 @@
 #   sudo ./setup_system.sh [options]
 #
 # Options:
-#   -o, --only TASK   run only one task: "usb-power" or "serial" (default: all)
+#   -o, --only TASK   run only one task: "deps", "usb-power" or "serial"
+#                     (default: all, in that order)
 #   -u, --user USER   user to add to the dialout group
 #                     (default: $SUDO_USER, or the invoking user)
 #   -s, --serial SN   serial number of the Portenta board
@@ -44,6 +51,11 @@ set -euo pipefail
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(cd "$(dirname "$0")" 2>/dev/null && pwd)/${SCRIPT_NAME}"
 [[ -f $SCRIPT_PATH ]] || SCRIPT_PATH="$(command -v -- "$0" 2>/dev/null || echo "$0")"
+
+# --- apt dependencies -----------------------------------------------------
+APT_PACKAGES=(build-essential cmake git clang libeigen3-dev)
+PHIDGET_PACKAGE="libphidget22"
+PHIDGET_SETUP_URL="https://www.phidgets.com/downloads/setup_linux"
 
 # --- USB power delivery -------------------------------------------------------
 USB_KEY="usb_max_current_enable"
@@ -62,6 +74,7 @@ END_MARK="# <<< Walker serial permissions <<<"
 TASKS="all"
 DRY_RUN=0
 CHANGES=0
+DEPS_CHANGED=0
 BOOT_CHANGED=0
 UDEV_CHANGED=0
 GROUP_CHANGED=0
@@ -99,10 +112,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$TASKS" in
-  all|usb-power|serial) ;;
-  *) die "unknown task '$TASKS' (expected: all, usb-power, serial)" ;;
+  all|deps|usb-power|serial) ;;
+  *) die "unknown task '$TASKS' (expected: all, deps, usb-power, serial)" ;;
 esac
-DO_USB_POWER=0; DO_SERIAL=0
+DO_DEPS=0; DO_USB_POWER=0; DO_SERIAL=0
+[[ $TASKS == all || $TASKS == deps      ]] && DO_DEPS=1
 [[ $TASKS == all || $TASKS == usb-power ]] && DO_USB_POWER=1
 [[ $TASKS == all || $TASKS == serial    ]] && DO_SERIAL=1
 
@@ -151,7 +165,65 @@ backup_file() {
 }
 
 # ============================================================================
-#  Task 1: USB power delivery  (config.txt)
+#  Task 1: apt dependencies  (build tools + Phidget22 driver)
+# ============================================================================
+
+# True (0) if the given dpkg package is installed.
+pkg_installed() {
+  dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q '^install ok installed'
+}
+
+# True (0) if an apt source for the Phidgets repository is already registered.
+phidget_repo_present() {
+  grep -r -l -i 'phidgets\.com' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null | grep -q .
+}
+
+task_deps() {
+  head1 "apt dependencies"
+
+  if ! command -v dpkg-query >/dev/null 2>&1 || ! command -v apt-get >/dev/null 2>&1; then
+    warn "apt/dpkg not found on this system: skipping dependency installation"
+    return 0
+  fi
+
+  local missing=() pkg
+  for pkg in "${APT_PACKAGES[@]}"; do
+    pkg_installed "$pkg" || missing+=("$pkg")
+  done
+
+  local need_repo=0
+  if ! pkg_installed "$PHIDGET_PACKAGE"; then
+    missing+=("$PHIDGET_PACKAGE")
+    if ! phidget_repo_present; then
+      need_repo=1
+    fi
+  fi
+
+  if [[ ${#missing[@]} -eq 0 ]]; then
+    ok "all required apt packages already installed (${APT_PACKAGES[*]} $PHIDGET_PACKAGE)"
+    return 0
+  fi
+
+  DEPS_CHANGED=1
+
+  if [[ $need_repo -eq 1 ]]; then
+    chg "registering the Phidgets apt repository ($PHIDGET_SETUP_URL)"
+    if [[ $DRY_RUN -eq 0 ]]; then
+      command -v curl >/dev/null 2>&1 || die "curl is required to register the Phidgets apt repository"
+      curl -fsSL "$PHIDGET_SETUP_URL" | bash -
+    fi
+  fi
+
+  chg "installing missing apt package(s): ${missing[*]}"
+  if [[ $DRY_RUN -eq 0 ]]; then
+    apt-get update -qq
+    apt-get install -y "${missing[@]}"
+    ok "installed: ${missing[*]}"
+  fi
+}
+
+# ============================================================================
+#  Task 2: USB power delivery  (config.txt)
 # ============================================================================
 
 # List every occurrence of the key as "<line>\t<section>\t<active|commented>\t<value>".
@@ -268,7 +340,7 @@ task_usb_power() {
 }
 
 # ============================================================================
-#  Task 2: serial permissions  (dialout group + udev rules)
+#  Task 3: serial permissions  (dialout group + udev rules)
 # ============================================================================
 
 # Extract "vendor:product" from a udev rule line, so that an older, manually
@@ -410,6 +482,7 @@ task_serial() {
 # ============================================================================
 #  Main
 # ============================================================================
+[[ $DO_DEPS      -eq 1 ]] && task_deps
 [[ $DO_USB_POWER -eq 1 ]] && task_usb_power
 [[ $DO_SERIAL    -eq 1 ]] && task_serial
 
@@ -436,6 +509,7 @@ if [[ $UDEV_CHANGED -eq 1 ]]; then
 fi
 
 info "$CHANGES change(s) applied"
+[[ $DEPS_CHANGED  -eq 1 ]] && info "apt packages installed/updated"
 [[ $UDEV_CHANGED  -eq 1 ]] && info "unplug/replug the boards so that the new udev rules are applied"
 [[ $GROUP_CHANGED -eq 1 ]] && info "open a new login session so that the 'dialout' membership of '$TARGET_USER' takes effect"
 [[ $BOOT_CHANGED  -eq 1 ]] && info "reboot for the new USB power setting to take effect"

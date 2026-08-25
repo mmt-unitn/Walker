@@ -45,6 +45,16 @@ sudo apt install build-essential cmake git clang libeigen3-dev
 
 Eigen3 is required at configure time. If it is missing, CMake stops with an explicit error and suggests installing `libeigen3-dev`.
 
+**Alternative: automated script**
+
+Instead of installing these packages manually, run [`scripts/setup_system.sh`](scripts/setup_system.sh):
+
+```bash
+sudo ./scripts/setup_system.sh --only deps
+```
+
+The script installs the build dependencies above plus `libphidget22` (registering the Phidgets apt repository first if needed — see [Phidget22](#phidget22) below). It does **not** install MADS, which remains a manual step. See [Automated setup script](#automated-setup-script) below for full usage.
+
 ## Configure USB Power Delivery via Software
 Enable the maximum USB power output by editing:
 
@@ -93,6 +103,10 @@ sudo apt install -y libphidget22
 ```
 or follow the installation procedure documented in the referenced [Phidget22 repository](https://github.com/MatteoBonetto/Phidget22/tree/897d367527e2bce3e7ca2bc8521db213b275d294).
 
+**Alternative: automated script**
+
+[`scripts/setup_system.sh --only deps`](scripts/setup_system.sh) also installs `libphidget22`, registering the Phidgets apt repository first if it is not already present. See [Automated setup script](#automated-setup-script) below.
+
 ### **Remove root permission to files for serial communication**
 
 **Alternative: automated script**
@@ -140,9 +154,15 @@ The script adds your user to the `dialout` group and writes both udev rules file
 
 ## Automated setup script
 
-[`scripts/setup_system.sh`](scripts/setup_system.sh) automates both of the manual configuration steps above: **Configure USB Power Delivery via Software** and **Remove root permission to files for serial communication**. It is idempotent — a change is only made when the current system state differs from the desired one, so running it repeatedly on an already configured machine does nothing. Any file it modifies is backed up to `<file>.bak` before the first change.
+[`scripts/setup_system.sh`](scripts/setup_system.sh) automates three of the manual setup steps above:
 
-Run both tasks:
+1. **`deps`** — installs the apt build dependencies (`build-essential cmake git clang libeigen3-dev`) and `libphidget22`, registering the Phidgets apt repository first if needed. MADS is **not** installed by this script; it remains a manual step (see [External runtime dependency: MADS](#external-runtime-dependency-mads)).
+2. **`usb-power`** — Configure USB Power Delivery via Software.
+3. **`serial`** — Remove root permission to files for serial communication.
+
+It is idempotent — a change is only made when the current system state differs from the desired one, so running it repeatedly on an already configured machine does nothing. Any file it modifies is backed up to `<file>.bak` before the first change.
+
+Run all tasks (in the order above):
 
 ```bash
 sudo ./scripts/setup_system.sh
@@ -151,6 +171,7 @@ sudo ./scripts/setup_system.sh
 Run a single task:
 
 ```bash
+sudo ./scripts/setup_system.sh --only deps
 sudo ./scripts/setup_system.sh --only usb-power
 sudo ./scripts/setup_system.sh --only serial
 ```
@@ -163,7 +184,7 @@ Preview the changes without touching anything (no root required):
 
 Useful options:
 
-- `-o, --only TASK` — `usb-power`, `serial`, or `all` (default)
+- `-o, --only TASK` — `deps`, `usb-power`, `serial`, or `all` (default)
 - `-u, --user USER` — user to add to the `dialout` group (default: the invoking user)
 - `-s, --serial SN` — Portenta board serial number (default: `004200473033510A34323437`)
 - `-f, --file PATH` — firmware config file to edit (default: `/boot/firmware/config.txt`, then `/boot/config.txt`)
