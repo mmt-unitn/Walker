@@ -58,6 +58,16 @@ and adding:
 usb_max_current_enable=1
 ```
 
+**Alternative: automated script**
+
+Instead of editing the file manually, run [`scripts/setup_system.sh`](scripts/setup_system.sh):
+
+```bash
+sudo ./scripts/setup_system.sh --only usb-power
+```
+
+The script locates `/boot/firmware/config.txt` (falling back to `/boot/config.txt`), adds `usb_max_current_enable=1` if it is missing, fixes it if set to another value, or leaves the file untouched if it is already correct. See [Automated setup script](#automated-setup-script) below for full usage.
+
 ## External runtime dependency: MADS
 
 Walker depends on **MADS**. This README targets **MADS v2.0.4**, which is published as the latest release on the referenced GitHub release page.
@@ -84,6 +94,17 @@ sudo apt install -y libphidget22
 or follow the installation procedure documented in the referenced [Phidget22 repository](https://github.com/MatteoBonetto/Phidget22/tree/897d367527e2bce3e7ca2bc8521db213b275d294).
 
 ### **Remove root permission to files for serial communication**
+
+**Alternative: automated script**
+
+Instead of performing the steps below manually, run [`scripts/setup_system.sh`](scripts/setup_system.sh):
+
+```bash
+sudo ./scripts/setup_system.sh --only serial
+```
+
+The script adds your user to the `dialout` group and writes both udev rules files shown below, updating them in place if they already exist with different content. See [Automated setup script](#automated-setup-script) below for full usage.
+
   1. Accessing `ttyACM*` Without `Root`
       - By default, `ttyACM*` is owned by root and belongs to the dialout group. Add Your User to the dialout Group:
          ```bash
@@ -116,6 +137,41 @@ or follow the installation procedure documented in the referenced [Phidget22 rep
         SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="025b", ATTRS{serial}=="004200473033510A34323437", SYMLINK+="portenta", MODE="0666"
          ```
       - Reboot to apply the rule 
+
+## Automated setup script
+
+[`scripts/setup_system.sh`](scripts/setup_system.sh) automates both of the manual configuration steps above: **Configure USB Power Delivery via Software** and **Remove root permission to files for serial communication**. It is idempotent — a change is only made when the current system state differs from the desired one, so running it repeatedly on an already configured machine does nothing. Any file it modifies is backed up to `<file>.bak` before the first change.
+
+Run both tasks:
+
+```bash
+sudo ./scripts/setup_system.sh
+```
+
+Run a single task:
+
+```bash
+sudo ./scripts/setup_system.sh --only usb-power
+sudo ./scripts/setup_system.sh --only serial
+```
+
+Preview the changes without touching anything (no root required):
+
+```bash
+./scripts/setup_system.sh --dry-run
+```
+
+Useful options:
+
+- `-o, --only TASK` — `usb-power`, `serial`, or `all` (default)
+- `-u, --user USER` — user to add to the `dialout` group (default: the invoking user)
+- `-s, --serial SN` — Portenta board serial number (default: `004200473033510A34323437`)
+- `-f, --file PATH` — firmware config file to edit (default: `/boot/firmware/config.txt`, then `/boot/config.txt`)
+- `-v, --value VAL` — value for `usb_max_current_enable` (default: `1`)
+- `-n, --dry-run` — report what would change, without modifying anything
+- `-h, --help` — show all options
+
+Full documentation is in the script's header comment.
 
 ## Build and install
 
