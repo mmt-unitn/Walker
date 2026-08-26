@@ -91,64 +91,63 @@ include(FetchContent)
 FetchContent_Declare(
   load_cells_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/load_cells_plugin.git
-  GIT_TAG 0cf03b7
+  GIT_TAG 5b97f40
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
-  GIT_TAG c8da4f0
+  GIT_TAG 0e85e3b
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   portenta_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/portenta_plugin.git
-  GIT_TAG 8dc2e67
+  GIT_TAG 7a3f0b0
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   imu_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/sense-hat_plugin.git
-  GIT_TAG 33c3c43
+  GIT_TAG 1737080
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   forces_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/forces_calibration_plugin.git
-  GIT_TAG 6b59ed2
+  GIT_TAG c4e7450
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   ego_state_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/ego_state_plugin.git
-  GIT_TAG ff05f25
+  GIT_TAG 55ddd33
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
-  GIT_SUBMODULES_RECURSE TRUE
 )
 
 FetchContent_Declare(
   FSM
   GIT_REPOSITORY https://github.com/mmt-unitn/FSM.git
-  GIT_TAG 9b3043f
+  GIT_TAG 2aacb45
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   unhook_detector_plugin
   GIT_REPOSITORY  https://github.com/mmt-unitn/UnhookDetector.git
-  GIT_TAG  cd01c40
+  GIT_TAG e22013d
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(
   watchdog_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/watchdog_plugin.git
-  GIT_TAG 0246d4b
+  GIT_TAG b731a55
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
@@ -169,13 +168,19 @@ FetchContent_Declare(
 FetchContent_Declare(
   imu_calibration_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/imu_calibration_plugin.git
-  GIT_TAG b3d73e8
+  GIT_TAG 5b9ae3d
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
 FetchContent_Declare(plugin_tester
   GIT_REPOSITORY https://github.com/mmt-unitn/plugin_tester.git
   GIT_TAG        main
+  GIT_SHALLOW    TRUE
+)
+
+FetchContent_Declare(overload_detector_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/overload_detector_plugin.git
+  GIT_TAG        8377e10
   GIT_SHALLOW    TRUE
 )
 
@@ -191,6 +196,8 @@ FetchContent_MakeAvailable(
   FSM
   watchdog_plugin
   plugin_tester
+  overload_detector_plugin
+  
 )
 
 set(CPACK_PACKAGE_NAME "MADS plugins")

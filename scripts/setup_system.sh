@@ -23,6 +23,11 @@
 #       and /dev/portenta symlinks;
 #     - reloads and re-triggers udev.
 #
+#   "Source the shared shell configuration"
+#     - adds a line to the target user's ~/.bashrc that sources the
+#       ".shell_common" file located next to this script, if such a line
+#       is not already present.
+#
 # The script is idempotent: every change is applied only when it is missing or
 # different from what is expected, so a second run on an already configured
 # machine does nothing.  Existing settings are updated in place instead of
@@ -34,8 +39,8 @@
 #   sudo ./setup_system.sh [options]
 #
 # Options:
-#   -o, --only TASK   run only one task: "deps", "usb-power" or "serial"
-#                     (default: all, in that order)
+#   -o, --only TASK   run only one task: "deps", "usb-power", "serial" or
+#                     "bashrc" (default: all, in that order)
 #   -u, --user USER   user to add to the dialout group
 #                     (default: $SUDO_USER, or the invoking user)
 #   -s, --serial SN   serial number of the Portenta board
@@ -51,6 +56,7 @@ set -euo pipefail
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_PATH="$(cd "$(dirname "$0")" 2>/dev/null && pwd)/${SCRIPT_NAME}"
 [[ -f $SCRIPT_PATH ]] || SCRIPT_PATH="$(command -v -- "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 
 # --- apt dependencies -----------------------------------------------------
 APT_PACKAGES=(build-essential cmake git clang libeigen3-dev)
@@ -71,6 +77,11 @@ TARGET_USER=""
 BEGIN_MARK="# >>> Walker serial permissions - managed by setup_system.sh, do not edit >>>"
 END_MARK="# <<< Walker serial permissions <<<"
 
+# --- shared shell configuration -----------------------------------------------
+SHELL_COMMON_FILE="$SCRIPT_DIR/.shell_common"
+BASHRC_BEGIN_MARK="# >>> Walker shell common - managed by setup_system.sh, do not edit >>>"
+BASHRC_END_MARK="# <<< Walker shell common <<<"
+
 TASKS="all"
 DRY_RUN=0
 CHANGES=0
@@ -78,6 +89,7 @@ DEPS_CHANGED=0
 BOOT_CHANGED=0
 UDEV_CHANGED=0
 GROUP_CHANGED=0
+BASHRC_CHANGED=0
 
 # ---------------------------------------------------------------- logging ---
 if [[ -t 1 ]]; then
@@ -112,13 +124,14 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$TASKS" in
-  all|deps|usb-power|serial) ;;
-  *) die "unknown task '$TASKS' (expected: all, deps, usb-power, serial)" ;;
+  all|deps|usb-power|serial|bashrc) ;;
+  *) die "unknown task '$TASKS' (expected: all, deps, usb-power, serial, bashrc)" ;;
 esac
-DO_DEPS=0; DO_USB_POWER=0; DO_SERIAL=0
+DO_DEPS=0; DO_USB_POWER=0; DO_SERIAL=0; DO_BASHRC=0
 [[ $TASKS == all || $TASKS == deps      ]] && DO_DEPS=1
 [[ $TASKS == all || $TASKS == usb-power ]] && DO_USB_POWER=1
 [[ $TASKS == all || $TASKS == serial    ]] && DO_SERIAL=1
+[[ $TASKS == all || $TASKS == bashrc    ]] && DO_BASHRC=1
 
 # ------------------------------------------------------ environment checks ---
 [[ "$(uname -s)" == "Linux" ]] || die "this script only makes sense on Linux (found $(uname -s))"
@@ -480,11 +493,71 @@ task_serial() {
 }
 
 # ============================================================================
+#  Task 4: shared shell configuration  (~/.bashrc sources .shell_common)
+# ============================================================================
+
+task_bashrc() {
+  head1 "shell common sourcing (.bashrc)"
+
+  local target_home bashrc source_line desired existed
+
+  target_home="$(getent passwd "$TARGET_USER" 2>/dev/null | cut -d: -f6)"
+  [[ -n $target_home ]] || target_home="$(eval echo "~$TARGET_USER" 2>/dev/null || true)"
+  if [[ -z $target_home || ! -d $target_home ]]; then
+    warn "could not determine the home directory of user '$TARGET_USER': skipping .bashrc update"
+    return 0
+  fi
+  bashrc="$target_home/.bashrc"
+
+  if [[ ! -f $SHELL_COMMON_FILE ]]; then
+    warn ".shell_common not found next to $SCRIPT_NAME ($SHELL_COMMON_FILE)"
+    warn "adding the sourcing line to .bashrc anyway; it is guarded so it stays a no-op until the file exists"
+  fi
+
+  source_line="[ -f \"$SHELL_COMMON_FILE\" ] && source \"$SHELL_COMMON_FILE\""
+  desired="$BASHRC_BEGIN_MARK"$'\n'"$source_line"$'\n'"$BASHRC_END_MARK"
+
+  if [[ -f $bashrc ]] && grep -qF -- "$SHELL_COMMON_FILE" "$bashrc" 2>/dev/null; then
+    if grep -qxF -- "$BASHRC_BEGIN_MARK" "$bashrc" 2>/dev/null; then
+      ok "$bashrc already sources $SHELL_COMMON_FILE"
+    else
+      ok "$bashrc already references $SHELL_COMMON_FILE (pre-existing manual line), leaving it alone"
+    fi
+    return 0
+  fi
+
+  chg "adding a line to $bashrc to source $SHELL_COMMON_FILE"
+  BASHRC_CHANGED=1
+
+  if [[ $DRY_RUN -eq 1 ]]; then
+    info "would append to $bashrc:"
+    printf '%s\n' "$desired" | sed 's/^/      /'
+    return 0
+  fi
+
+  existed=0
+  [[ -f $bashrc ]] && existed=1
+  if [[ $existed -eq 1 ]]; then
+    backup_file "$bashrc"
+  else
+    : > "$bashrc"
+    chown "$TARGET_USER": "$bashrc" 2>/dev/null || true
+  fi
+
+  {
+    [[ -s $bashrc ]] && printf '\n'
+    printf '%s\n' "$desired"
+  } >> "$bashrc"
+  ok "$bashrc updated"
+}
+
+# ============================================================================
 #  Main
 # ============================================================================
 [[ $DO_DEPS      -eq 1 ]] && task_deps
 [[ $DO_USB_POWER -eq 1 ]] && task_usb_power
 [[ $DO_SERIAL    -eq 1 ]] && task_serial
+[[ $DO_BASHRC    -eq 1 ]] && task_bashrc
 
 head1 "summary"
 if [[ $CHANGES -eq 0 ]]; then
@@ -509,8 +582,9 @@ if [[ $UDEV_CHANGED -eq 1 ]]; then
 fi
 
 info "$CHANGES change(s) applied"
-[[ $DEPS_CHANGED  -eq 1 ]] && info "apt packages installed/updated"
-[[ $UDEV_CHANGED  -eq 1 ]] && info "unplug/replug the boards so that the new udev rules are applied"
-[[ $GROUP_CHANGED -eq 1 ]] && info "open a new login session so that the 'dialout' membership of '$TARGET_USER' takes effect"
-[[ $BOOT_CHANGED  -eq 1 ]] && info "reboot for the new USB power setting to take effect"
+[[ $DEPS_CHANGED   -eq 1 ]] && info "apt packages installed/updated"
+[[ $UDEV_CHANGED   -eq 1 ]] && info "unplug/replug the boards so that the new udev rules are applied"
+[[ $GROUP_CHANGED  -eq 1 ]] && info "open a new login session so that the 'dialout' membership of '$TARGET_USER' takes effect"
+[[ $BOOT_CHANGED   -eq 1 ]] && info "reboot for the new USB power setting to take effect"
+[[ $BASHRC_CHANGED -eq 1 ]] && info "open a new shell (or run 'source ~/.bashrc') so that .shell_common is sourced"
 exit 0

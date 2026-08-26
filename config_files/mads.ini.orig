@@ -1,4 +1,5 @@
 
+
 #   ____                                      
 #  / ___|___  _ __ ___  _ __ ___   ___  _ __  
 # | |   / _ \| '_ ` _ \| '_ ` _ \ / _ \| '_ \ 
@@ -12,6 +13,9 @@ backend_address = "tcp://localhost:9091"
 settings_address = "tcp://localhost:9092"
 compress = true
 timecode_fps = 20
+
+[record]
+sub_topic = ["loadcells"]
 
 #  __  __                   _ _ _   _     _      
 # |  \/  | ___  _ __   ___ | (_) |_| |__ (_) ___ 
@@ -27,11 +31,11 @@ settings_address = "tcp://*:9092"
 
 [logger]
 mongo_uri = "mongodb://localhost:27017"
-mongo_db = "Imbrago"
+mongo_db = "torques_analysis"
 # sub_topic = ["logger", "metadata", "rfid", "skeleton", "platform", "image", "agent_event", "bridge", "perf_assess"]
 # or, subscribe to all topics:
 # sub_topic = ["H_initial_walker_aruco", "H_initial_walker_htc", "encoders", "imu"]
-sub_topic = [""]
+sub_topic = ["driver", "FSM/set_point"]
 datamax_length = 75
 initially_paused = false
 
@@ -42,7 +46,7 @@ pub_topic = "bridge"
 
 [feedback]
 # Subscribes to ALL topics
-sub_topic = ["calibrated_imu"]
+sub_topic = ["FSM/mode","watchdog","FSM/path_planning", "calibrated_imu"]
 print_width = 0
 indent_width = 2
 
@@ -96,18 +100,35 @@ period = 18
 pub_topic = "loadcells"
 show_void_phidget = true
 [loadcells.serial_number]
-mono = 588716
+mono = 797649
 triaxis_l = 582396
 triaxis_r = 588795
+[loadcells.gains]
+back_right = 1.28
+front_left = 1.1
+back_left = 1.1
+front_right = 1.1
+fx_r = 1.8
+fy_r = 1.8
+fx_l = 1.8
+fy_l = 1.8
 
 [driver]
 sub_topic = "FSM/set_point"
-speed_limit = 10.5
+speed_limit = 4
+slope = 1000
+# It is used only for control in current. Look for GIQ
+# acceleration_limit = 1 
+# current_limit * sqrt(2) / 10 = max_current (A) 
+current_limit = 70
+watchdog = 500
+torque_current_ratio = 600
 wheel_radius = 0.084
 port = "/dev/drivers"
 dont_block = true
 period = 8
 queue_size = 1
+echo = false
 
 [ego_state]
 sub_topic = ["driver", "forces_calibrated", "FSM/odometry", "calibrated_imu", "htc"]
@@ -152,11 +173,13 @@ QoS = 2                   # MQTT Quality of Service
 topic = "mads2mqtt"               # MQTT topic to submitted to
 
 [FSM]
-sub_topic = ["ego_state", "GUI", "driver", "unhookdetector"]
+sub_topic = ["ego_state", "GUI", "driver", "unhookdetector", "overload_detector"]
 pub_topic = "FSM/set_point"
-time_slipping = 1.5
-time_unhook = 0.5
-silent = false
+time_slipping = 1.2
+time_unhook = 2.2
+#time_overload = 5
+time_overload = 60000
+silent = true
 [FSM.impedance_control]
 wheel_radius = 0.084
 wheel_base = 0.86
@@ -320,6 +343,22 @@ window_size = 50
 n = 3           
 load_cell_names = ["back_left", "back_right", "front_left", "front_right"]
 
+[validator]
+schemas = "C:\\Users\\RoseUser\\Desktop\\schemaNOVA.json" # path to the JSON schemas file (default="schemas.json")
+sub_topic = ["FSM/mode", "watchdog",  "FSM/path_planning",   "GUI", "FSM/odometry", "FSM/portenta", "FSM/set_point",  "calibrated_imu", "driver", "ego_state", "forces_calibrated", "Imu", "loadcells", "unhookdetector"] # subscribe to these topics for validation (default=[])
+
+[estimate_torque_from_current]
+sub_topic = ["driver"]
+torque_current_ratio = 0.6
+
+[overload_detector]
+sub_topic = ["driver", "ego_state"]
+F_th = 5
+T_th = 3
+current_th = 95
+speed_th = 0.5
+angular_speed_th = 0.5
+
 ########  ######## ########  ##     ## ##    ## ##    ## ######## ########  
 ##     ## ##       ##     ## ##     ## ###   ## ###   ## ##       ##     ## 
 ##     ## ##       ##     ## ##     ## ####  ## ####  ## ##       ##     ## 
@@ -343,6 +382,7 @@ fft_keypaths = ["/ego_state/ego_state/F_x", "/ego_state/ego_state/T"]
 # fft_keypaths = ["/loadcells/forces/triaxis_l/fx_l", "/loadcells/forces/triaxis_l/fy_l", "/loadcells/forces/triaxis_l/fz_l", "/loadcells/forces/triaxis_r/fx_r", "/loadcells/forces/t>
 window_size  = 200          # Width of the ACF and FFT window (integer)
 blueprint = "blueprint.rbl" # local or absolute path to a valid blueprint
+queue_size=1
 
 [rerunner_harness]
 sub_topic = ["harness_detachment"] # Topics to subscribe to (array of strings)
@@ -356,7 +396,7 @@ blueprint = "blueprint.rbl" # local or absolute path to a valid blueprint
 sub_topic = ["ego_state"] # Topics to subscribe to (array of strings)
 time = ""       # Name of the timecode column in the input data (string)
 # List of keypaths for time series
-keypaths = ["/ego_state/ego_state/theta"]
+keypaths = ["/ego_state/ego_state/theta", "/ego_state/ego_state/x", "/ego_state/ego_state/space_linear"]
 window_size  = 200          # Width of the ACF and FFT window (integer)
 blueprint = "blueprint.rbl" # local or absolute path to a valid blueprint
 
@@ -386,10 +426,10 @@ blueprint = "blueprint.rbl" # local or absolute path >
 
 
 [rerunner_encoders]
-sub_topic = ["encoders"] # Topics to subscribe to (array >
+sub_topic = ["driver"] # Topics to subscribe to (array >
 time = ""       # Name of the timecode column in the input data (s>
 # List of keypaths for time series
-keypaths = ["/encoders/encoders/right", "/encoders/encoders/left", "/encoders/speeds/left", "/encoders/speeds/right", "/encoders/currents/right", "/encoders/currents/left"]
+keypaths = ["/driver/encoders/right", "/driver/encoders/left", "/driver/speeds/left", "/driver/speeds/right", "/driver/currents/right", "/driver/currents/left"]
 # keypaths = ["/encoders/encoders/right", "/encoders/encoders/left"]
 #acf_keypaths = ["/encoders/encoders/right", "/encoders/encoders/left"]
 winddow_size  = 200          # Width of the ACF and FFT window (int>
@@ -405,13 +445,24 @@ winddow_size  = 200          # Width of the ACF and FFT window (int>
 blueprint = "blueprint.rbl" # local or absolute path to a valid bl>
 
 [rerunner_setpoints]
-sub_topic = ["set_point"] # Topics to subscribe to (array >
+sub_topic = ["FSM/set_point"] # Topics to subscribe to (array >
 time = ""       # Name of the timecode column in the input data (s>
 # List of keypaths for time series
-keypaths = ["/set_point/sp/sx", "/set_point/sp/dx"]
+keypaths = ["/FSM/set_point/sp/sx", "/FSM/set_point/sp/dx"]
 #acf_keypaths = ["/encoders/right", "/encoders/left"]
 winddow_size  = 200          # Width of the ACF and FFT window (int>
 blueprint = "blueprint.rbl" # local or absolute path to a valid bl>
+queue_size=1
+
+[rerunner_setpoints_current]
+sub_topic = ["FSM/set_point", "driver", "estimate_torque_from_current"] 
+time = ""       # Name of the timecode column in the input data (s>
+# List of keypaths for time series
+keypaths = ["/FSM/set_point/sp/sx", "/FSM/set_point/sp/dx", "/driver/currents/left", "/driver/currents/right", "/estimate_torque_from_current/left", "/estimate_torque_from_current/right"]
+#acf_keypaths = ["/encoders/right", "/encoders/left"]
+# winddow_size  = 200          # Width of the ACF and FFT window (int>
+blueprint = "/blueprint/rerunner_setpoints_current.rbl" # local or absolute path to a valid bl>
+queue_size=1
 
 [rerunner_htc_pca]
 sub_topic = ["H_tracker_pca"] # Topics to subscribe to (array of strings)
@@ -690,3 +741,15 @@ pub_topic = "group6"
 [rt]
 sub_topic=["rt_input"]
 pub_topic="rt"
+
+# _    ___                  ___             __  _           
+#| |  / (_)______  ______ _/ (_)___  ____ _/ /_(_)___  ____ 
+#| | / / / ___/ / / / __ `/ / /_  / / __ `/ __/ / __ \/ __ \
+#| |/ / (__  ) /_/ / /_/ / / / / /_/ /_/ / /_/ / /_/ / / / /
+#|___/_/____/\__,_/\__,_/_/_/ /___/\__,_/\__/_/\____/_/ /_/ 
+                                                           
+[rerunner_loadcells_l]
+sub_topic = ["loadcells"]
+time = "/timecode"
+keypaths = ["/loadcells/forces/mono/back_left", "/loadcells/forces/mono/back_right", "/loadcells/forces/mono/front_left", "/loadcells/forces/mono/front_right", "/loadcells/forces/triaxis_l/fx_l", "/loadcells/forces/triaxis_l/fy_l", "/loadcells/forces/triaxis_l/fz_l", "/loadcells/forces/triaxis_r/fx_r", "/loadcells/forces/triaxis_r/fy_r", "/loadcells/forces/triaxis_r/fz_r"]
+blueprint = "blueprints/loadcells.rbl"

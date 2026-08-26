@@ -1,0 +1,51 @@
+digraph mads {
+  rankdir=LR;
+  node [shape=record, fontname="monospace", fontsize=8];
+  edge [fontname="monospace", fontsize=8];
+
+  FSM                [label="FSM|{ego_state\lGUI\ldriver\lunhookdetector\loverload_detector\l}", color=darkgreen];
+  GAME_EVENT         [label="GAME_EVENT\lpub GAME [!]|{watchdog\lGUI\lFSM/mode [!]\l}", color=darkgreen, style=dashed];
+  GAME_HF            [label="GAME_HF\lpub GAME [!]|{FSM/path_planning [!]\l}", color=darkgreen, style=dashed];
+  GUI_EVENT          [label="GUI_EVENT|{FSM/mode [!]\lwatchdog\l}", color=darkgreen, style=dashed];
+  GUI_HF             [label="GUI_HF|{FSM/path_planning [!]\ldriver\l}", color=darkgreen, style=dashed];
+  driver             [label="driver|{FSM/set_point\l}", color=darkblue];
+  ego_state          [label="ego_state|{driver\lforces_calibrated\lFSM/odometry [!]\lcalibrated_imu\lhtc [!]\l}", color=darkgreen, style=dashed];
+  forces_calibration [label="forces_calibration|{loadcells\lGUI\lautocalibration [!]\l}", color=darkgreen, style=dashed];
+  hat                [label="hat", color=darkred];
+  imu_calibration    [label="imu_calibration|{GUI\limu\l}", color=darkgreen];
+  loadcells          [label="loadcells", color=darkred];
+  logger             [label="logger|{driver\lFSM/set_point\l}", color=darkblue];
+  overload_detector  [label="overload_detector|{driver\lego_state\l}", color=darkblue];
+  portenta           [label="portenta|{FSM/portenta [!]\l}", color=darkblue, style=dashed];
+  record             [label="record|{loadcells\l}", color=darkblue];
+  unhookdetector     [label="unhookdetector|{forces_calibrated\l}", color=darkblue];
+  watchdog           [label="watchdog"];
+
+  FSM                -> driver [label="FSM/set_point"];
+  FSM                -> logger [label="FSM/set_point"];
+  GUI_EVENT          -> FSM [label="GUI"];
+  GUI_EVENT          -> GAME_EVENT [label="GUI"];
+  GUI_EVENT          -> forces_calibration [label="GUI"];
+  GUI_EVENT          -> imu_calibration [label="GUI"];
+  GUI_HF             -> FSM [label="GUI"];
+  GUI_HF             -> GAME_EVENT [label="GUI"];
+  GUI_HF             -> forces_calibration [label="GUI"];
+  GUI_HF             -> imu_calibration [label="GUI"];
+  driver             -> FSM [label="driver", color=gray50, fontcolor=gray50];
+  driver             -> GUI_HF [label="driver", color=gray50, fontcolor=gray50];
+  driver             -> ego_state [label="driver", color=gray50, fontcolor=gray50];
+  driver             -> logger [label="driver", color=gray50, fontcolor=gray50];
+  driver             -> overload_detector [label="driver", color=gray50, fontcolor=gray50];
+  ego_state          -> FSM [label="ego_state"];
+  ego_state          -> overload_detector [label="ego_state"];
+  forces_calibration -> ego_state [label="forces_calibrated"];
+  forces_calibration -> unhookdetector [label="forces_calibrated"];
+  hat                -> imu_calibration [label="imu"];
+  imu_calibration    -> ego_state [label="calibrated_imu"];
+  loadcells          -> forces_calibration [label="loadcells"];
+  loadcells          -> record [label="loadcells"];
+  overload_detector  -> FSM [label="overload_detector", color=gray50, fontcolor=gray50];
+  unhookdetector     -> FSM [label="unhookdetector", color=gray50, fontcolor=gray50];
+  watchdog           -> GAME_EVENT [label="watchdog", color=gray50, fontcolor=gray50];
+  watchdog           -> GUI_EVENT [label="watchdog", color=gray50, fontcolor=gray50];
+}

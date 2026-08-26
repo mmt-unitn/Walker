@@ -11,6 +11,16 @@ e questo progetto segue il versionamento semantico.
 ### Changed
 ### Fixed
 
+## [v2.1.1] - 26/08/2026
+### Changed
+ - Simplified version of ego_state without submodules
+ - new MADS version 2.4.2
+### Added
+ - Description of useful command for mads
+ - Toml for mads up in launch folder
+
+---
+
 ## [v2.1.0] - 02/07/2026 
 ### Added
  - Visualization with rerunner and mads director

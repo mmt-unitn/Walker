@@ -1,0 +1,22 @@
+current_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+crypto() {
+  args=()
+  use_crypto=false
+
+  for arg in "$@"; do
+      args+=("$arg")
+  done
+
+args+=(
+    --crypto
+    --key_broker=broker
+    --key_client=broker
+    --keys_dir=$current_path/../visualization/keys
+)
+
+  command "${args[@]}"
+}
+
+alias show_test_status="tmux attach -t process-compose-terminal"
+alias check_flags="$current_path/../check_flag.sh"
