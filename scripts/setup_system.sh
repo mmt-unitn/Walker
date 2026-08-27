@@ -489,7 +489,7 @@ task_serial() {
     '# Motor driver board -> /dev/drivers' \
     'SUBSYSTEM=="tty", ATTRS{idVendor}=="20d2", ATTRS{idProduct}=="5740", SYMLINK+="drivers", MODE="0666"' \
     '# Portenta board -> /dev/portenta' \
-    "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"2341\", ATTRS{idProduct}==\"025b\", ATTRS{serial}==\"${PORTENTA_SERIAL}\", SYMLINK+=\"portenta\", MODE=\"0666\""
+    "SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"2341\", ATTRS{idProduct}==\"025b\", SYMLINK+=\"portenta\", MODE=\"0666\""
 }
 
 # ============================================================================

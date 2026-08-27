@@ -1,0 +1,16 @@
+[Unit]
+Description=MADS Services Launcher
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+
+Environment="CURRENT_CMAKE_DIR=@CURRENT_CMAKE_DIR@"
+
+ExecStart=/bin/bash -c "exec /usr/local/bin/mads up -f \"$${CURRENT_CMAKE_DIR}/launch/mads_up.toml\" -q --max-restarts 5"
+
+[Install]
+WantedBy=multi-user.target

@@ -19,4 +19,4 @@ args+=(
 }
 
 alias show_test_status="tmux attach -t process-compose-terminal"
-alias check_flags="$current_path/../check_flag.sh"
+alias check_flags="$current_path/check_flag.sh"

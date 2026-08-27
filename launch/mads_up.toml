@@ -1,62 +1,85 @@
 [broker]
 command = "mads broker -d --crypto=broker --keys_dir=../visualization/keys/ --room=Novawalk"
 workdir = ""
-tty = "false"
+tty = false
+relaunch = true
 
 [driver]
 command = "mads filter driver --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [loadcells]
 command = "mads source loadcells --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [portenta]
 command = "mads sink portenta --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [forces_calibration]
 command = "mads filter forces_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [imu_calibration]
 command = "mads filter imu_calibration --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [imu]
 command = "mads source sense-hat --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [ego_state]
 command = "mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [unhookdetector]
 command = "mads filter unhookdetector --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [watchdog]
 command = "mads source watchdog --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [overload_detector]
 command = "mads filter overload_detector --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 [FSM]
 command = "exec $(mads -p)/bin/mads-NovaWalk-FSM --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
-tty = "false"
+tty = false
+after = "broker"
+relaunch = true
 
 
 

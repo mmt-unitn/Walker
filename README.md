@@ -148,7 +148,7 @@ The script adds your user to the `dialout` group and writes both udev rules file
       - Add the following rule for Drivers and Portenta:
         ```bash
         SUBSYSTEM=="tty", ATTRS{idVendor}=="20d2", ATTRS{idProduct}=="5740", SYMLINK+="drivers", MODE="0666"
-        SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="025b", ATTRS{serial}=="004200473033510A34323437", SYMLINK+="portenta", MODE="0666"
+        SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="025b", SYMLINK+="portenta", MODE="0666"
          ```
       - Reboot to apply the rule 
 
