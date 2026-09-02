@@ -168,7 +168,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   driver_plugin
   GIT_REPOSITORY https://github.com/mmt-unitn/driver_plugin.git
-  GIT_TAG 0e85e3b
+  GIT_TAG 68ae8fb
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
