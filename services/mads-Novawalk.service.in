@@ -20,6 +20,7 @@ mads filter ego_state --crypto --key_broker=broker --key_client=broker --keys_di
 mads filter unhookdetector --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR} & \
 mads source watchdog --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR} & \
 mads filter overload_detector --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR} & \
+mads source htc --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR} & \
 exec $(mads -p)/bin/mads-NovaWalk-FSM --crypto --key_broker=broker --key_client=broker --keys_dir=$${MADS_KEYS_DIR}"
 
 [Install]

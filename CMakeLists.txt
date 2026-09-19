@@ -256,6 +256,13 @@ FetchContent_Declare(
   GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
 )
 
+FetchContent_Declare(
+  htc_plugin
+  GIT_REPOSITORY https://github.com/mmt-unitn/htc_plugin.git
+  GIT_TAG 1644a2c
+  GIT_SHALLOW ${FETCHCONTENT_SHALLOW_CLONE}
+)
+
 FetchContent_MakeAvailable(
   load_cells_plugin
   driver_plugin
@@ -269,10 +276,11 @@ FetchContent_MakeAvailable(
   watchdog_plugin
   plugin_tester
   overload_detector_plugin
+  htc_plugin
 )
 
 # ------------------------------------------------------------------------------
-# MADS systemd service
+# MADS systemd services
 # ------------------------------------------------------------------------------
 
 if(INSTALL_MADS_SERVICE)
@@ -281,44 +289,59 @@ if(INSTALL_MADS_SERVICE)
   set(CURRENT_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
   if(MADS_UP)
-    set(MADS_SERVICE_NAME "mads_up-Novawalk.service")
-  else()
-    set(MADS_SERVICE_NAME "mads-Novawalk.service")
-  endif()
-
-  set(
-    MADS_SERVICE_TEMPLATE
-    "${CMAKE_CURRENT_LIST_DIR}/services/${MADS_SERVICE_NAME}.in"
-  )
-
-  set(
-    MADS_SERVICE_OUTPUT
-    "${CMAKE_CURRENT_BINARY_DIR}/services/${MADS_SERVICE_NAME}"
-  )
-
-  if(NOT EXISTS "${MADS_SERVICE_TEMPLATE}")
-    message(
-      FATAL_ERROR
-      "Service template not found: ${MADS_SERVICE_TEMPLATE}"
+    # Install both services, but enable only the non-crypto service.
+    set(
+      MADS_SERVICE_NAMES
+      "mads_up-Novawalk.service"
+      "mads_up-Novawalk_crypto.service"
     )
+    set(MADS_SERVICE_TO_ENABLE "mads_up-Novawalk.service")
+  else()
+    set(MADS_SERVICE_NAMES "mads-Novawalk.service")
+    set(MADS_SERVICE_TO_ENABLE "mads-Novawalk.service")
   endif()
 
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/services")
 
-  configure_file(
-    "${MADS_SERVICE_TEMPLATE}"
-    "${MADS_SERVICE_OUTPUT}"
-    @ONLY
-  )
+  set(MADS_SERVICE_OUTPUTS)
 
-  message(STATUS "Selected systemd service: ${MADS_SERVICE_NAME}")
-  message(STATUS "Service template: ${MADS_SERVICE_TEMPLATE}")
-  message(STATUS "Generated service: ${MADS_SERVICE_OUTPUT}")
+  foreach(MADS_SERVICE_NAME IN LISTS MADS_SERVICE_NAMES)
+    set(
+      MADS_SERVICE_TEMPLATE
+      "${CMAKE_CURRENT_LIST_DIR}/services/${MADS_SERVICE_NAME}.in"
+    )
+
+    set(
+      MADS_SERVICE_OUTPUT
+      "${CMAKE_CURRENT_BINARY_DIR}/services/${MADS_SERVICE_NAME}"
+    )
+
+    if(NOT EXISTS "${MADS_SERVICE_TEMPLATE}")
+      message(
+        FATAL_ERROR
+        "Service template not found: ${MADS_SERVICE_TEMPLATE}"
+      )
+    endif()
+
+    configure_file(
+      "${MADS_SERVICE_TEMPLATE}"
+      "${MADS_SERVICE_OUTPUT}"
+      @ONLY
+    )
+
+    list(APPEND MADS_SERVICE_OUTPUTS "${MADS_SERVICE_OUTPUT}")
+
+    message(STATUS "Selected systemd service: ${MADS_SERVICE_NAME}")
+    message(STATUS "Service template: ${MADS_SERVICE_TEMPLATE}")
+    message(STATUS "Generated service: ${MADS_SERVICE_OUTPUT}")
+  endforeach()
+
   message(STATUS "Current CMake directory: ${CURRENT_CMAKE_DIR}")
   message(STATUS "MADS keys directory: ${MADS_KEYS_DIR}")
+  message(STATUS "Service to enable: ${MADS_SERVICE_TO_ENABLE}")
 
   install(
-    FILES "${MADS_SERVICE_OUTPUT}"
+    FILES ${MADS_SERVICE_OUTPUTS}
     DESTINATION "/etc/systemd/system"
   )
 
@@ -337,17 +360,17 @@ if(INSTALL_MADS_SERVICE)
       )
     endif()
 
-    message(STATUS \"Enabling ${MADS_SERVICE_NAME}...\")
+    message(STATUS \"Enabling ${MADS_SERVICE_TO_ENABLE}...\")
 
     execute_process(
-      COMMAND systemctl enable \"${MADS_SERVICE_NAME}\"
+      COMMAND systemctl enable \"${MADS_SERVICE_TO_ENABLE}\"
       RESULT_VARIABLE SYSTEMD_ENABLE_RESULT
     )
 
     if(NOT SYSTEMD_ENABLE_RESULT EQUAL 0)
       message(
         FATAL_ERROR
-        \"Could not enable ${MADS_SERVICE_NAME}. Error code: \${SYSTEMD_ENABLE_RESULT}\"
+        \"Could not enable ${MADS_SERVICE_TO_ENABLE}. Error code: \${SYSTEMD_ENABLE_RESULT}\"
       )
     endif()
   ")

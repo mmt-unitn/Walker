@@ -16,6 +16,7 @@ The build includes a set of Walker plugins plus the **FSM** core component, whic
 - `harness_detachment_plugin`
 - `watchdog_plugin`
 - `imu_calibration_plugin`
+- `htc_plugin`
 
 ### Core component
 - `FSM` — monolithic core module, not a plugin
@@ -89,6 +90,11 @@ Download and install the latest MADS release from:
 After installing MADS, make sure the `mads` executable is available in your `PATH` before installing Walker with service support.
 
 ## Additional hardware/software dependencies
+
+### LibSurvive
+
+**It is only needed for sensor fusion with an absolute pose provided by HTC**
+The `htc plugin` is fetched from the `htc_plugin` repository. For the required LibSurvive library installation and setup steps, follow the README of the [htc_plugin repository](https://github.com/mmt-unitn/htc_plugin).
 
 ### Sense HAT
 

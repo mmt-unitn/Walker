@@ -29,7 +29,7 @@ relaunch = false
 tty = "false"
 
 [rerunner_detectors]
-command = "mads sink rerunner.plugin -n rerunner_detectors -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n rerunner_detectors -s mads.ini"
 workdir = ""
 enabled = false
 scale = 1
@@ -37,7 +37,7 @@ relaunch = false
 tty = "false"
 
 [rerunner_loadcells]
-command = "mads sink rerunner.plugin -n rerunner_loadcells -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n rerunner_loadcells -s mads.ini"
 workdir = ""
 enabled = false
 scale = 1
@@ -45,7 +45,7 @@ relaunch = false
 tty = "false"
 
 [rerunner_forces_calibrated]
-command = "mads sink rerunner.plugin -n rerunner_forces_calibrated -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n rerunner_forces_calibrated -s mads.ini"
 workdir = ""
 enabled = false
 scale = 1
@@ -53,7 +53,7 @@ relaunch = false
 tty = "false"
 
 [rerunner_calibrated_imu]
-command = "mads sink rerunner.plugin -n rerunner_calibrated_imu -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n rerunner_calibrated_imu -s mads.ini"
 workdir = ""
 enabled = false
 scale = 1
@@ -61,11 +61,11 @@ relaunch = false
 tty = "false"
 
 [rerunner_imu]
-command = "mads sink rerunner.plugin -n rerunner_imu -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n rerunner_imu -s mads.ini"
 enabled = false
 
 [rerunner_driver]
-command = "mads sink rerunner.plugin -n rerunner_driver -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n rerunner_driver -s mads.ini"
 after = "calculate_torque"
 workdir = ""
 enabled = false
@@ -74,7 +74,7 @@ relaunch = false
 tty = "false"
 
 [rerunner_ego_state]
-command = "mads sink rerunner.plugin -n rerunner_ego_state -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n rerunner_ego_state -s mads.ini"
 after = "ego_state_trajectory"
 workdir = ""
 enabled = false
@@ -83,5 +83,5 @@ relaunch = false
 tty = "false"
 
 [rerunner_driver_response]
-command = "mads sink rerunner.plugin -n driver_response -s mads.ini --crypto --keys_dir=keys/ --key_client=gui"
+command = "mads sink rerunner.plugin -n driver_response -s mads.ini"
 enabled = false

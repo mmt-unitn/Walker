@@ -11,6 +11,15 @@ e questo progetto segue il versionamento semantico.
 ### Changed
 ### Fixed
 
+## [v3.0.0] - 29/09/2026
+### Added
+ - New htc plugin
+ - Standard version runs without cryptography while there still be the possibility to change.
+### Changed
+ - Update of the driver plugin due to changing of the driver firmware
+
+---
+
 ## [v2.1.1] - 26/08/2026
 ### Changed
  - Simplified version of ego_state without submodules
