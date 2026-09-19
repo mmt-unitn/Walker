@@ -1,5 +1,5 @@
 [broker]
-command = "mads broker -d eys_dir=../visualization/keys/ --room=Novawalk"
+command = "mads broker -d --room=Novawalk"
 workdir = ""
 tty = false
 relaunch = true
@@ -81,7 +81,7 @@ tty = false
 after = "broker"
 relaunch = true
 
-[FSM]
+[htc]
 command = "mads source htc"
 workdir = ""
 tty = false

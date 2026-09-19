@@ -81,7 +81,7 @@ tty = false
 after = "broker"
 relaunch = true
 
-[FSM]
+[htc]
 command = "mads source htc --crypto --key_broker=broker --key_client=broker --keys_dir=../visualization/keys/"
 workdir = ""
 tty = false
